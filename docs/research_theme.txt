@@ -1,0 +1,88 @@
+3.1.1. English: AR-Integrated Infrastructure Monitoring and Maintenance System (AR-IMMS)
+3.1.2. Vietnamese: Hệ thống Giám sát và Bảo trì Cơ sở Hạ tầng Tích hợp Thực tế Tăng cường
+(*) 3.2. Main proposal content (including result and product)
+a) Context:
+In large data centers and server rooms, infrastructure monitoring is commonly performed through web-based monitoring dashboards and centralized management interfaces. While these dashboards effectively display operational telemetry (such as CPU/RAM usage, network traffic, and system alerts), they present a critical operational limitation: the digital monitoring data is completely detached from the physical spatial location of the hardware assets. When an infrastructure incident occurs, system administrators and field technicians face significant operational friction, which reduce the efficiency of infrastructure maintenance activities:
+· Spatial Disconnect & Identification Delays: Technicians must manually cross-reference alert logs across multiple monitoring screens with real-world rack layouts to locate the exact failing physical node among dozens or hundreds of identical server chassis.
+· Delayed Incident Response: Searching for specific nodes, inspecting container workloads, and verifying physical cable/hardware statuses manually increases Mean Time to Resolution (MTTR) and risks prolonged service downtime.
+· Lack of Contextual Field Information: On-site technicians lack immediate, hands-on access to live telemetry, service logs, and historical maintenance tickets directly at the physical hardware location.
+Advances in Augmented Reality, Digital Twin technology, and real-time infrastructure monitoring enable a more contextual and efficient approach to managing Data Center environments. AR-IMMS is proposed as an AR-integrated monitoring and maintenance platform that connects physical infrastructure, operational data, alerts, and maintenance of workflows. The system uses a Digital Twin to provide a real-time overview of infrastructure assets, resource utilization, and active services, while the mobile AR application allows technicians to identify target devices and access contextual information during on-site maintenance. The platform also supports incident and ticket management, technician assignments, historical trend analysis, operational reporting, and activity auditing.
+Since deployment in an actual Data Center is not feasible within the project scope, AR-IMMS will be implemented and evaluated using a Mini Data Center testbed in which physical computers represent infrastructure servers, groups of devices represent racks, and applications or services running on each server represent system workloads.
+
+b) Proposed Solutions:
+This project proposes AR-IMMS, an AR-integrated infrastructure monitoring and maintenance management system consisting of a Mini Data Center physical testbed, a cloud-based backend with real-time streaming telemetry, a high-fidelity web management portal, and a mobile Augmented Reality application. The system will:
+· Map physical infrastructure to digital assets: Connect physical servers, groups of devices (racks), and running applications/workloads into a hierarchy structured (Sites à Rooms à Racks à Nodes/Servers à Containers/Workloads) using a Digital Twin model.
+· Provide real-time streaming telemetry and drill-down monitoring: Monitor server health, resource utilization, and container runtime states via WebSocket streaming, enabling seamless 3-click spatial navigation from macro-level down to individual container logs.
+· Bridge digital data and physical assets via AR: Utilize QR/ArUco spatial markers attached to physical nodes, allowing on-site technicians to scan hardware with a mobile AR app to instantly overlay contextual operational status, resource metrics, and active service indicators directly onto target devices.
+· Streamline incident and ticket management: Automate alert detection, trigger visual spatial alerts, and allow seamless assignment of maintenance tickets and operational tasks to field technicians.
+· Support lifecycle asset and maintenance auditing: Track hardware status and specifications, maintenance history logs, warranty alerts, and operational audit trails for data center compliance.
+· Provide operational reporting and historical trend analysis: Offer configurable historical telemetry querying, capacity planning metrics, PUE/power consumption analytics, and system audit reports grouped by site, room, rack, and node.
+
+c) Functional Requirements:
+System Administrator
+· Create, update, deactivate, and assign roles to user accounts, and configure system-wide platform settings.
+· View aggregated system health indicators (service availability, data collector connectivity, and alert volume) across all integrated components.
+· Manage Mini Data Center environments, system configuration.
+· View audit logs and configuration change history across the system.
+System Operator
+· Register, update, and manage racks, servers, and their associated workloads
+· Associate a physical QR/ArUco marker identifier with a registered server or node during onboarding, and update the association if hardware is relocated or replaced.
+· Monitor the real-time and historical operational status of the Mini Data Center infrastructure.
+· View the Digital Twin to identify the status, location, and relationships of racks, servers, and running services.
+· Configure alert thresholds, review abnormal conditions, and acknowledge active alerts.
+· Acknowledge active alerts and, where action is required, create an incident or maintenance ticket referencing the originating alert; assign and track tickets, operational reports, and service history.
+· View historical trend reports, capacity planning metrics, and PUE/power consumption analytics grouped by site, room, rack, and node.
+· Record and update hardware specifications, warranty information, and maintenance history for registered assets
+Technician
+· View assigned incidents or maintenance tickets and identify the rack and server requiring inspection.
+· Use the AR application to recognize a physical device and access its contextual operational information.
+· View server status, telemetry data, alerts, diagnostic information, and associated workloads or services.
+· Acknowledge assigned work, update the handling status, and record investigation notes, identified causes, and corrective actions.
+· Record maintenance results, review device service history, mark an incident as resolved, and submit a ticket closure request for System Operator approval
+Automated Monitoring and Alerting System
+· Collect operational data and connectivity status from registered servers at defined intervals.
+· Detect unavailable servers, interrupted data collection, and operational metrics that exceed configured thresholds.
+· Create and update alerts throughout their lifecycle, including open, acknowledged, resolved, and closed states.
+· Store historical telemetry and record important monitoring, alerting, and maintenance activities in the audit log
+
+d) Non-Functional Requirements:
+· Performance: Server telemetry shall be collected at a configurable interval, with a default interval of five seconds, and a server shall be reported as unavailable when no telemetry is received for more than 90 seconds.
+· Availability: The platform shall operate during expected working hours, notify users when a server or data collector becomes unavailable.
+· Security: The system shall enforce authenticated access and role-based permissions for Administrators, Operators, and Technicians, use mTLS for telemetry agents, and audit all configuration changes, ticket updates, and remote actions.
+· Reliability: Telemetry agents shall retry failed transmissions and resume automatically after reconnection, while duplicate alerts shall be suppressed to prevent alert storms and incidents shall follow an open, in-progress, resolved, and closed lifecycle.
+· Scalability: The PoC shall demonstrate that a newly added processing node begins streaming telemetry and appears in the Digital Twin within 5 minutes of registration, requiring configuration limited to node credentials and endpoint address, and without modifying core service code.
+· Usability: The system shall provide a desktop-first English dashboard and an Android AR application. User interface shall be responsive, accessible, and provide clear server health status, incident details, remediation steps, and maintenance instructions.
+· Maintainability and Safety: The system shall support automated testing, centralized logging, configurable metrics and alerts, and require confirmation and audit logging for disruptive actions in AR sessions such as restarting a service.
+
+e) Theory & Practical:
+Theory
+· Digital Twin modeling, physical-to-digital asset mapping, and infrastructure hierarchy representation.
+· Augmented Reality, QR/ArUco marker tracking, and contextual information overlay.
+· Infrastructure telemetry, near-real-time monitoring, and time-series data processing
+· Threshold-based alerting, incident workflows, and state-machine management
+· Role-Based Access Control, secure device identity, and audit logging
+· Reliable distributed data collection, retry handling, stale-data detection, and duplicate suppression
+Practice
+· Agile/Scrum Software Development and ongoing requirements validation with stakeholders.
+· Mini Data Center Testbed Construction: Multi-computer hardware cluster setup representing physical racks, bare-metal node configuration, and containerized microservice workload deployment.
+· NestJS RESTful API design, Socket.IO real-time event broadcasting, relational/time-series database optimization, and JWT authentication guards.
+· Web Admin Command Center & Mobile AR Development: web dashboard development using Next.js featuring real-time WebSocket streaming charts and hierarchical drilldowns, alongside React Native mobile application integrated with AR tracking frameworks for spatial marker recognition and real-time camera overlays.
+· DevOps, Testing & System Integration: Containerized deployment, end-to-end integration testing, WebSocket connection stability testing under high metric throughput, and security auditing.
+
+f) Products (Expected Deliverables):
+· Mini Data Center Testbed & Lightweight Collector Agent: Physical laptop/server cluster setup with cross-platform lightweight monitoring agents installed to capture hardware telemetry, system metrics, and Docker container stats.
+· Next.js Web Admin Command Center: monitoring portal with real-time streaming charts and interactive Rack /Node/Workload management views.
+· React Native Mobile AR Application: Mobile app for field technicians featuring QR/ArUco spatial marker scanning, camera overlays of live telemetry, and on-site maintenance workflows.
+· Backend API & Real-Time Telemetry Engine: Cloud backend (NestJS) handling REST APIs, Socket.IO real-time event broadcasting, JWT authentication, and time-series metric processing.
+· Incident, Alerting & Ticket Management Module: System for automated health threshold detection, visual alerts, ticket creation, and technician task assignments.
+· Asset Lifecycle & Audit Trail Module: Hardware inventory management, warranty tracking, maintenance history, and immutable operational audit logs.
+· Reporting & Analytics Dashboard: Module for historical trend analysis, capacity planning and operational reporting grouped by site, room, rack, and node.
+· Project Documentation & Artifacts: Source code repositories, test suites, deployment scripts, user guides, and technical architecture documentation.
+
+g) Proposed Tasks:
+· Task Package 1 - System Analysis, Architecture & Core Backend Services: System requirements analysis, data model design, NestJS backend API structure, JWT authentication, RBAC authorization, and spatial data hierarchy modeling.
+· Task Package 2 - Mini Data Center Testbed & Telemetry Collector Agent: Hardware cluster setup (laptop/server testbed), lightweight collector agent development for OS/hardware/Docker metrics, and agent-to-backend communication.
+· Task Package 3 - Real-Time Telemetry & Alerting Engine: Socket.IO streaming gateway integration, time-series metrics processing, visual threshold evaluation, and automated alert notification pipeline.
+· Task Package 4 - Next.js Web Admin Command Center: high-fidelity web portal, real-time assets telemetry monitoring dashboard, asset lifecycle management, and incident ticketing workflow.
+· Task Package 5 - React Native Mobile AR Application: mobile app development, camera view integration with AR tracking framework, ArUco/QR marker spatial recognition, and live telemetry overlay UI.
+· Task Package 6 - System Integration, Testing, Testbed Evaluation & Documentation: End-to-end integration, performance/WebSocket load testing, security auditing, mini data center testbed evaluation, and technical documentation delivery
