@@ -1,0 +1,25 @@
+\chapter{QUY TẮC NGHIỆP VỤ}
+
+Chương này quy định danh mục các Quy tắc Nghiệp vụ (\textit{Business Rules - BR}) áp dụng bắt buộc trong toàn bộ logic xử lý của hệ thống AR-IMMS từ BR-01 đến BR-15.
+
+\begin{longtable}{|p{2.5cm}|p{4.5cm}|p{7.5cm}|}
+\hline
+\textbf{Mã Quy tắc} & \textbf{Tên quy tắc} & \textbf{Nội dung quy tắc bắt buộc} \\ \hline
+\endhead
+\textbf{BR-01} & Phân quyền dựa trên Vai trò (RBAC) & Hệ thống chỉ cho phép người dùng thực hiện các thao tác trong phạm vi quyền hạn được cấp: Administrator được toàn quyền quản trị; Operator quản lý vận hành/ticket; Technician chỉ tiếp nhận ticket và sử dụng app AR. \\ \hline
+\textbf{BR-02} & Mã hóa phiên làm việc \& JWT & Mật khẩu người dùng phải được mã hóa dạng hash an toàn (bcrypt/argon2). Các cuộc gọi API yêu cầu xác thực JWT Token hợp lệ, thời hạn token tối đa 24 giờ. \\ \hline
+\textbf{BR-03} & Định dạng Cấu trúc Phân cấp Hạ tầng & Mọi tài sản vật lý phải tuân thủ nghiêm ngặt cây quan hệ cha-con: $\text{Site} \rightarrow \text{Room} \rightarrow \text{Rack} \rightarrow \text{Server} \rightarrow \text{Workload}$. Không cho phép tồn tại máy chủ độc lập không thuộc tủ Rack. \\ \hline
+\textbf{BR-04} & Độc nhất Mã AR Marker & Mỗi mã QR Code hoặc ArUco Marker chỉ được ánh xạ duy nhất tới 01 nút máy chủ tại một thời điểm. Không cho phép gán trùng 1 mã marker cho 2 thiết bị khác nhau. \\ \hline
+\textbf{BR-05} & Chu kỳ Thu thập Telemetry & Monitoring Agent gửi dữ liệu về Backend định kỳ mặc định 5 giây/lần. Trường hợp mất mạng tạm thời, Agent lưu đệm tối đa 1000 bản ghi telemetry cục bộ để gửi bù. \\ \hline
+\textbf{BR-06} & Đánh giá Mất kết nối (Unavailable) & Nếu trong 90 giây liên tục Backend không nhận được dữ liệu telemetry từ một Agent, hệ thống phải tự động chuyển trạng thái Server thành \textit{Unavailable}. \\ \hline
+\textbf{BR-07} & Đánh giá Ngưỡng Cảnh báo & Chỉ số telemetry vượt ngưỡng Warning (ví dụ CPU $> 80\%$) sẽ sinh cảnh báo mức Vàng; vượt ngưỡng Critical (ví dụ CPU $> 90\%$) sẽ sinh cảnh báo mức Đỏ. \\ \hline
+\textbf{BR-08} & Khử trùng lặp Cảnh báo (Suppress Storm) & Khi một lỗi kéo dài qua nhiều chu kỳ gửi dữ liệu, hệ thống không tạo Alert mới mà chỉ cập nhật số lần lặp lại (occurrence count) và thời gian xuất hiện mới nhất vào Alert cũ đang \textit{Open}. \\ \hline
+\textbf{BR-09} & Vòng đời Trạng thái Alert & Alert khởi tạo ở trạng thái \textit{Open}. Khi Operator bấm tiếp nhận chuyển thành \textit{Acknowledged}. Khi sự cố khắc phục xong chuyển thành \textit{Resolved} và tự động lưu \textit{Closed}. \\ \hline
+\textbf{BR-10} & Chuyển đổi Alert thành Incident & Một Alert chỉ có thể chuyển thành Incident khi đang ở trạng thái \textit{Open} hoặc \textit{Acknowledged}. Mỗi Alert chỉ tạo tối đa 01 Incident tương ứng. \\ \hline
+\textbf{BR-11} & Phân công Ticket & Phiếu Ticket chỉ được giao cho Kỹ thuật viên (Technician) đang có trạng thái tài khoản active. Hệ thống tự động gửi push notification ngay khi Ticket được phân công. \\ \hline
+\textbf{BR-12} & Phê duyệt Đóng Ticket & Kỹ thuật viên chỉ có quyền chuyển Ticket sang trạng thái \textit{Resolved} (Yêu cầu đóng). Chỉ có Operator mới có quyền bấm phê duyệt đóng chính thức Ticket sang trạng thái \textit{Closed}. \\ \hline
+\textbf{BR-13} & Xác thực 2 bước trên AR (Step-up Verification) & Các thao tác can thiệp rủi ro trên app AR (như Restart service) yêu cầu Kỹ thuật viên bấm xác nhận lần thứ 2 thông qua hộp thoại cảnh báo rủi ro trên màn hình. \\ \hline
+\textbf{BR-14} & Nhật ký Kiểm toán Bất biến (Audit Log) & Các bản ghi trong Audit Log chỉ có quyền Ghi (Write-only) và Đọc (Read-only). Tuyệt đối không cung cấp chức năng Sửa (Update) hoặc Xóa (Delete) Audit Log đối với mọi người dùng kể cả Admin. \\ \hline
+\textbf{BR-15} & Tự động Phát hiện Nút mới (Auto Onboard) & Máy chủ mới cài Agent sẽ tự động xuất hiện trên mô hình Digital Twin trong vòng 5 phút sau khi đăng ký mà không cần chỉnh sửa mã nguồn Backend hoặc khởi động lại hệ thống. \\ \hline
+\end{longtable}
+

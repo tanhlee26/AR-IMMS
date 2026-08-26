@@ -1,0 +1,123 @@
+\chapter{ĐẶC TẢ USE CASE}
+
+Chương này trình bày chi tiết về các tác nhân, biểu đồ Use Case tổng quát, danh mục 26 Use Case và đặc tả chi tiết cho từng Use Case trong hệ thống AR-IMMS.
+
+\section{Danh sách Tác nhân (Actors)}
+\begin{enumerate}
+    \item \textbf{Quản trị viên (Administrator):} Người có quyền hạn cao nhất, thực hiện quản lý người dùng, phân quyền, cấu hình hệ thống, thiết lập ngưỡng cảnh báo và xem nhật ký kiểm toán.
+    \item \textbf{Chuyên viên Vận hành (System Operator):} Người trực tiếp vận hành hạ tầng hằng ngày, quản lý tài sản, theo dõi bảng điều khiển giám sát, xử lý cảnh báo, tạo và phân công ticket bảo trì, duyệt đóng ticket và xem báo cáo.
+    \item \textbf{Kỹ thuật viên hiện trường (Field Technician):} Người làm việc tại hiện trường phòng máy chủ, tiếp nhận ticket, sử dụng ứng dụng di động AR để quét nhận diện thiết bị, xem telemetry trực tiếp, thực hiện sửa chữa và gửi yêu cầu đóng ticket.
+    \item \textbf{Monitoring Agent / IoT Engine:} Tác nhân hệ thống tự động thu thập dữ liệu telemetry từ máy chủ và phát cảnh báo tự động.
+\end{enumerate}
+
+\section{Biểu đồ Use Case tổng quát}
+Sơ đồ Use Case tổng quan được chia thành 7 phân nhóm nghiệp vụ: Xác thực, Quản lý tài sản, Giám sát, Cảnh báo, Quản lý Ticket, Thực tế tăng cường (AR) và Báo cáo.
+
+\section{Danh mục Use Case tổng hợp (UC-01 đến UC-26)}
+\begin{longtable}{|p{1.5cm}|p{4.5cm}|p{3.5cm}|p{5cm}|}
+\hline
+\textbf{Mã UC} & \textbf{Tên Use Case} & \textbf{Tác nhân chính} & \textbf{Mô tả ngắn gọn} \\ \hline
+\endhead
+\multicolumn{4}{|l|}{\textbf{1. Phân hệ Xác thực (Authentication)}} \\ \hline
+UC-01 & Đăng nhập & Admin, Operator, Tech & Nhập tài khoản/mật khẩu để lấy JWT Token. \\ \hline
+UC-02 & Đăng xuất & Admin, Operator, Tech & Hủy phiên làm việc hiện tại. \\ \hline
+UC-03 & Đặt lại mật khẩu & Admin, Operator, Tech & Khôi phục lại mật khẩu khi quên. \\ \hline
+UC-04 & Quản lý tài khoản & Administrator & Tạo, sửa, phân quyền, khóa tài khoản. \\ \hline
+\multicolumn{4}{|l|}{\textbf{2. Phân hệ Quản lý tài sản (Asset Management)}} \\ \hline
+UC-05 & Thêm tài sản/máy chủ & System Operator & Khai báo máy chủ, rack, vị trí không gian. \\ \hline
+UC-06 & Cập nhật tài sản & System Operator & Chỉnh sửa cấu hình, thông số máy chủ. \\ \hline
+UC-07 & Xóa tài sản & System Operator & Vô hiệu hóa tài sản khỏi hệ thống. \\ \hline
+UC-08 & Xem danh sách tài sản & Operator, Technician & Tra cứu, lọc danh sách tài sản. \\ \hline
+UC-09 & Quản lý ánh xạ AR Marker & System Operator & Gán mã QR/ArUco cho máy chủ. \\ \hline
+\multicolumn{4}{|l|}{\textbf{3. Phân hệ Giám sát (Monitoring)}} \\ \hline
+UC-10 & Xem Dashboard giám sát & Operator, Admin & Màn hình telemetry thời gian thực. \\ \hline
+UC-11 & Xem chi tiết Server & Operator, Technician & Mức CPU, RAM, Temp, Docker stats. \\ \hline
+UC-12 & Cấu hình ngưỡng cảnh báo & System Operator, Admin & Đặt giá trị ngưỡng Warning/Critical. \\ \hline
+\multicolumn{4}{|l|}{\textbf{4. Phân hệ Cảnh báo (Alert)}} \\ \hline
+UC-13 & Nhận thông báo Cảnh báo & Operator, Technician & Nhận thông báo khi chỉ số vượt ngưỡng. \\ \hline
+UC-14 & Xem danh sách cảnh báo & Operator, Technician & Truy vấn lịch sử Alert. \\ \hline
+UC-15 & Xác nhận Cảnh báo & System Operator & Chuyển trạng thái Alert thành Acknowledged. \\ \hline
+UC-16 & Xử lý \& Đóng cảnh báo & System Operator & Đóng Alert khi thông số an toàn. \\ \hline
+\multicolumn{4}{|l|}{\textbf{5. Phân hệ Quản lý Ticket (Ticket Management)}} \\ \hline
+UC-17 & Khởi tạo Ticket & System Operator & Tạo phiếu bảo trì từ Alert. \\ \hline
+UC-18 & Gán Ticket cho Kỹ thuật viên & System Operator & Phân công nhiệm vụ sửa chữa. \\ \hline
+UC-19 & Cập nhật trạng thái Ticket & Field Technician & Ghi nhận tiến độ In-Progress/Resolved. \\ \hline
+UC-20 & Xem lịch sử Ticket & Admin, Operator, Tech & Tra cứu hồ sơ bảo trì thiết bị. \\ \hline
+\multicolumn{4}{|l|}{\textbf{6. Phân hệ Thực tế tăng cường (AR)}} \\ \hline
+UC-21 & Quét \& Xem AR Overlay & Field Technician & Xem telemetry trực tiếp trên vỏ máy chủ. \\ \hline
+UC-22 & Điều hướng AR trong phòng & Field Technician & Dẫn đường trực quan tới vị trí tủ Rack. \\ \hline
+UC-23 & Xác thực thao tác nguy hiểm & Field Technician & Step-up verification trên app AR. \\ \hline
+\multicolumn{4}{|l|}{\textbf{7. Phân hệ Báo cáo (Report)}} \\ \hline
+UC-24 & Lập báo cáo vận hành & Operator, Admin & Tổng hợp chỉ số MTTR, sự cố, PUE. \\ \hline
+UC-25 & Xuất báo cáo PDF/Excel & Operator, Admin & Xuất báo cáo ra định dạng file. \\ \hline
+UC-26 & Xem nhật ký Audit Log & Administrator & Tra cứu nhật ký tác động hệ thống. \\ \hline
+\end{longtable}
+
+\section{Đặc tả chi tiết các Use Case trọng tâm}
+
+\subsection{Đặc tả UC-01: Đăng nhập hệ thống}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Mã Use Case} & \textbf{UC-01} \\ \hline
+\textbf{Tên Use Case} & Đăng nhập hệ thống \\ \hline
+\textbf{Tác nhân} & Administrator, System Operator, Field Technician \\ \hline
+\textbf{Mô tả} & Cho phép người dùng xác thực tài khoản để truy cập hệ thống. \\ \hline
+\textbf{Điều kiện tiên quyết} & Người dùng có tài khoản đang hoạt động trong hệ thống. \\ \hline
+\textbf{Luồng sự kiện chính} & 
+1. Người dùng mở ứng dụng Web hoặc App AR di động.\\ 
+& 2. Hệ thống hiển thị màn hình đăng nhập.\\ 
+& 3. Người dùng nhập Username và Password, nhấn "Đăng nhập".\\ 
+& 4. Hệ thống kiểm tra thông tin đăng nhập trong CSDL.\\ 
+& 5. Hệ thống khởi tạo JSON Web Token (JWT) chứa thông tin vai trò.\\ 
+& 6. Hệ thống chuyển hướng người dùng đến màn hình làm việc tương ứng. \\ \hline
+\textbf{Luồng thay thế} & 4a. Tên đăng nhập hoặc mật khẩu không chính xác: Hệ thống báo lỗi "Tài khoản hoặc mật khẩu không hợp lệ" và yêu cầu nhập lại. \\ \hline
+\textbf{Điều kiện sau} & Phiên làm việc được khởi tạo, JWT token được lưu trữ an toàn. \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Đặc tả UC-17: Khởi tạo Ticket bảo trì}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Mã Use Case} & \textbf{UC-17} \\ \hline
+\textbf{Tên Use Case} & Khởi tạo Ticket bảo trì \\ \hline
+\textbf{Tác nhân} & System Operator \\ \hline
+\textbf{Mô tả} & Khởi tạo phiếu công việc từ một Cảnh báo (Alert) active để phân công bảo trì. \\ \hline
+\textbf{Điều kiện tiên quyết} & Cảnh báo đang ở trạng thái Acknowledged. \\ \hline
+\textbf{Luồng sự kiện chính} & 
+1. Operator chọn một Cảnh báo trên bảng điều khiển giám sát.\\ 
+& 2. Operator nhấn nút "Tạo Ticket".\\ 
+& 3. Hệ thống mở biểu mẫu khởi tạo Ticket, tự động điền: Mã máy chủ, Vị trí Rack, Loại sự cố, Chỉ số lỗi.\\ 
+& 4. Operator nhập mô tả yêu cầu xử lý, chọn mức độ ưu tiên (Low/Medium/High/Critical).\\ 
+& 5. Operator nhấn "Lưu Ticket".\\ 
+& 6. Hệ thống tạo bản ghi Ticket mới ở trạng thái Open và lưu vết Audit Log. \\ \hline
+\textbf{Luồng thay thế} & 5a. Thiếu thông tin bắt buộc: Hệ thống thông báo yêu cầu nhập đầy đủ các trường dữ liệu. \\ \hline
+\textbf{Điều kiện sau} & Phiếu Ticket được lưu vào hệ thống, sẵn sàng để gán nhân sự. \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Đặc tả UC-21: Quét và Xem dữ liệu lớp phủ AR (AR Overlay)}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Mã Use Case} & \textbf{UC-21} \\ \hline
+\textbf{Tên Use Case} & Quét và Xem dữ liệu lớp phủ AR \\ \hline
+\textbf{Tác nhân} & Field Technician \\ \hline
+\textbf{Mô tả} & Quét mã QR/ArUco Marker trên máy chủ vật lý để hiển thị thông số telemetry thời gian thực dạng lớp phủ AR. \\ \hline
+\textbf{Điều kiện tiên quyết} & Kỹ thuật viên đã đăng nhập ứng dụng Mobile AR trên thiết bị Android. \\ \hline
+\textbf{Luồng sự kiện chính} & 
+1. Kỹ thuật viên di chuyển đến trước máy chủ và mở ứng dụng Mobile AR.\\ 
+& 2. Kỹ thuật viên hướng camera thiết bị vào mã QR/ArUco Marker trên vỏ máy.\\ 
+& 3. Ứng dụng AR nhận diện mã marker, trích xuất ID thiết bị trong $< 1$ giây.\\ 
+& 4. Ứng dụng gửi yêu cầu lấy dữ liệu tới Backend API.\\ 
+& 5. Backend trả về thông số CPU, RAM, Temp, Status và Active Alerts.\\ 
+& 6. Ứng dụng đè các bảng thông số số liệu ảo trực tiếp lên vị trí máy chủ thực tế trên màn hình camera. \\ \hline
+\textbf{Luồng thay thế} & 3a. Marker bị mờ hoặc không nhận diện được: Ứng dụng hiển thị thông báo "Hãy đưa camera lại gần hoặc làm sạch marker". \\ \hline
+\textbf{Điều kiện sau} & Kỹ thuật viên quan sát được telemetry thời gian thực tại hiện trường. \\ \hline
+\end{tabular}
+\end{table}
+

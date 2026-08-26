@@ -1,0 +1,46 @@
+\chapter{THÔNG BÁO VÀ XỬ LÝ LỖI}
+
+Chương này thống kê danh mục mã thông báo thành công, thông báo lỗi hệ thống và cơ chế xử lý ngoại lệ trong hệ thống AR-IMMS.
+
+\section{Tổng quan về cơ chế xử lý lỗi}
+Hệ thống AR-IMMS áp dụng cơ chế xử lý ngoại lệ tập trung (Centralized Exception Handling). Tất cả các phản hồi lỗi từ Backend API tới giao diện Web Command Center và ứng dụng di động AR đều tuân thủ chuẩn cấu trúc JSON chuẩn hóa bao gồm: Mã lỗi (\textit{error\_code}), Thông điệp (\textit{message}), Chi tiết (\textit{details}) và Thời điểm (\textit{timestamp}).
+
+\section{Danh mục mã thông báo thành công (Success Messages)}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{3cm}|p{5cm}|p{6.5cm}|}
+\hline
+\textbf{Mã thông báo} & \textbf{Thông điệp hiển thị} & \textbf{Ngữ cảnh sử dụng} \\ \hline
+\texttt{MSG\_AUTH\_200} & Đăng nhập thành công! & Người dùng xác thực tài khoản thành công. \\ \hline
+\texttt{MSG\_ASSET\_201} & Đã khởi tạo máy chủ mới! & Đăng ký thiết bị/server mới thành công. \\ \hline
+\texttt{MSG\_ALERT\_200} & Đã xác nhận cảnh báo. & Operator nhấn tiếp nhận (Acknowledge) Alert. \\ \hline
+\texttt{MSG\_TICKET\_201} & Đã khởi tạo phiếu Ticket bảo trì! & Operator tạo thành công phiếu công việc mới. \\ \hline
+\texttt{MSG\_AR\_200} & Nhận diện thành công thiết bị! & App AR nhận diện đúng mã QR/ArUco Marker. \\ \hline
+\texttt{MSG\_TICKET\_200} & Đã phê duyệt đóng Ticket! & Operator duyệt đóng Ticket hoàn tất. \\ \hline
+\end{tabular}
+\caption{Bảng mã thông báo thành công trong AR-IMMS}
+\end{table}
+
+\section{Danh mục mã lỗi hệ thống (Error Messages \& Codes)}
+\begin{longtable}{|p{3cm}|p{4.5cm}|p{7cm}|}
+\hline
+\textbf{Mã lỗi (Code)} & \textbf{Thông điệp hiển thị} & \textbf{Nguyên nhân \& Hướng xử lý} \\ \hline
+\endhead
+\texttt{ERR\_AUTH\_401} & Tài khoản hoặc mật khẩu không hợp lệ. & Người dùng nhập sai Username hoặc Password. \\ \hline
+\texttt{ERR\_AUTH\_403} & Bạn không có quyền thực hiện chức năng này. & Người dùng truy cập chức năng vượt quá vai trò RBAC. \\ \hline
+\texttt{ERR\_JWT\_401} & Phiên đăng nhập đã hết hạn. & JWT Token hết hạn. Yêu cầu người dùng đăng nhập lại. \\ \hline
+\texttt{ERR\_ASSET\_404} & Không tìm thấy thiết bị yêu cầu. & ID máy chủ hoặc tài sản không tồn tại trong CSDL. \\ \hline
+\texttt{ERR\_MARKER\_409} & Mã AR Marker đã được liên kết với máy chủ khác. & Vi phạm quy tắc duy nhất mã QR/ArUco Marker (BR-04). \\ \hline
+\texttt{ERR\_AGENT\_TIMEOUT} & Máy chủ bị ngắt kết nối telemetry quá 90 giây. & Monitoring Agent ngừng gửi dữ liệu (Heartbeat timeout). \\ \hline
+\texttt{ERR\_AR\_NO\_MATCH} & Không thể nhận diện mã định danh thiết bị. & Mã QR/ArUco bị mờ, rách hoặc camera không lấy nét. \\ \hline
+\texttt{ERR\_TICKET\_STATE} & Trạng thái Ticket không hợp lệ cho thao tác này. & Cố gắng đóng Ticket khi chưa qua bước Resolved. \\ \hline
+\texttt{ERR\_WS\_CONN} & Mất kết nối thời gian thực WebSocket. & Mạng LAN bị đứt kết nối. Hệ thống tự động Reconnect. \\ \hline
+\end{longtable}
+
+\section{Chiến lược xử lý ngoại lệ và gián đoạn truyền thông}
+\begin{itemize}
+    \item \textbf{Xử lý mất kết nối mạng ở Monitoring Agent:} Khi kết nối từ Agent tới Backend bị ngắt, Agent tự động lưu đệm telemetry vào bộ nhớ đệm tạm thời (Buffer Queue) và kích hoạt cơ chế thử lại lũy thừa (Exponential Backoff Retry). Ngay khi có mạng trở lại, Agent đẩy bù toàn bộ dữ liệu lưu đệm lên Backend.
+    \item \textbf{Xử lý mất kết nối WebSocket trên Web Command Center:} Khi giao diện Web bị ngắt WebSocket, ứng dụng tự động hiển thị thanh cảnh báo đỏ "Mất kết nối thời gian thực, đang thử nối lại..." và kích hoạt tiến trình Reconnect ngầm mỗi 3 giây.
+    \item \textbf{Cơ chế fallback khi thiếu dữ liệu Telemetry:} Nếu chỉ số telemetry của một nút máy chủ bị thiếu do lỗi cảm biến cục bộ, hệ thống sẽ sử dụng giá trị telemetry hợp lệ gần nhất (Stale Data Fallback) trong vòng 30 giây kèm biểu tượng cảnh báo dấu chấm cảm màu vàng trên giao diện UI.
+\end{itemize}
+

@@ -1,0 +1,98 @@
+\documentclass[12pt,a4paper]{report}
+
+% ==========================================
+% CẤU HÌNH GÓI VÀ TIẾNG VIỆT
+% ==========================================
+\usepackage[utf8]{vietnam}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=30mm,
+    right=20mm,
+    top=25mm,
+    bottom=25mm,
+    headheight=15pt
+}
+
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Đặc tả Yêu cầu Phần mềm (SRS) - AR-IMMS},
+    pdfpagemode=FullName,
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\footnotesize Hệ thống AR-IMMS - Tài liệu SRS}
+\lhead{\footnotesize Trường Đại học Giao thông Vận tải HCM / Dự án AR-IMMS}
+\rfoot{\thepage}
+
+% ==========================================
+% THÔNG TIN TRANG BÌA
+% ==========================================
+\title{
+    \Huge \textbf{ĐẶC TẢ YÊU CẦU PHẦN MỀM}\\
+    \Huge \textbf{(SOFTWARE REQUIREMENTS SPECIFICATION)}\\[1.5cm]
+    \Large \textbf{DỰ ÁN: HỆ THỐNG GIÁM SÁT VÀ BẢO TRÌ CƠ SỞ HẠ TẦNG TÍCH HỢP THỰC TẾ TĂNG CƯỜNG (AR-IMMS)}\\[0.5cm]
+    \large \textit{(AR-Integrated Infrastructure Monitoring and Maintenance System)}
+}
+\author{
+    \textbf{Nhóm Phát triển Dự án AR-IMMS}\\[0.5cm]
+    \begin{tabular}{ll}
+        \textbf{Phiên bản:} & 1.0.0 \\
+        \textbf{Ngày phát hành:} & 26/08/2026 \\
+        \textbf{Trạng thái:} & Phê duyệt Final
+    \end{tabular}
+}
+\date{}
+
+\begin{document}
+
+% Trang bìa
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+\pagenumbering{roman}
+
+% Mục lục
+\tableofcontents
+\newpage
+
+\listoftables
+\newpage
+
+% ==========================================
+% NỘI DUNG CÁC CHƯƠNG (IMPORT)
+% ==========================================
+\pagenumbering{arabic}
+
+\input{chap1_introduction.tex}
+\input{chap2_overall_description.tex}
+\input{chap3_business_processes.tex}
+\input{chap4_functional_requirements.tex}
+\input{chap5_use_case_specifications.tex}
+\input{chap6_non_functional_requirements.tex}
+\input{chap7_business_rules.tex}
+\input{chap8_error_handling.tex}
+\input{chap9_appendices.tex}
+
+\end{document}
