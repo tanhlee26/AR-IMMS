@@ -15,7 +15,7 @@ def get_token_from_header() -> str:
 def jwt_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        from dependency_container import container
+        from core.container import container
         auth_service = container.auth_service()
         token = get_token_from_header()
         payload = auth_service.decode_token(token)

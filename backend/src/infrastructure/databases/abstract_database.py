@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
-from config import DevelopmentConfig,Config, FactoryConfig
+from core.config import DevelopmentConfig,Config, FactoryConfig
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 class AbstractDatabase(ABC):

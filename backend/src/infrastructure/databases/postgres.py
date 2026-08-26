@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
-from config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
+from core.config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
 from infrastructure.databases.base import Base
 class PostgresDB:
      def __init__(self, host, port, dbname, user, password):
