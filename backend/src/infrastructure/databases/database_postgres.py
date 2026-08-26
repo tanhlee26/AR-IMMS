@@ -5,7 +5,7 @@ import psycopg2
 from psycopg2 import sql
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from config import Config, DevelopmentConfig
+from core.config import Config, DevelopmentConfig
 from infrastructure.databases.base import Base
 
 class DatabasePostgres(AbstractDatabase):

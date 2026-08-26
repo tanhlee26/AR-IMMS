@@ -1,0 +1,16 @@
+{
+  "name": "ar-imms-mobile-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React Native Mobile AR Application for Field Technicians",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-native": "^0.73.0"
+  }
+}
+
