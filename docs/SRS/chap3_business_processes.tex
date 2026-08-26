@@ -1,0 +1,97 @@
+\chapter{QUY TRÌNH NGHIỆP VỤ}
+
+\section{Tổng quan luồng vận hành hệ thống}
+Quy trình dịch vụ của hệ thống AR-IMMS hoạt động theo mô hình khép kín (Closed-loop Workflow) gồm 5 giai đoạn liên tục để đảm bảo mọi sự cố từ khi phát sinh cho đến khi hoàn thành sửa chữa đều được theo dõi và ghi nhật ký minh bạch.
+
+\begin{figure}[H]
+\centering
+\textbf{[1. Thu thập \& Giám sát]} $\longrightarrow$ \textbf{[2. Phát hiện \& Cảnh báo]} $\longrightarrow$ \textbf{[3. Phân công Ticket]} $\longrightarrow$ \textbf{[4. Xử lý bằng AR]} $\longrightarrow$ \textbf{[5. Nghiệm thu \& Kiểm toán]}
+\caption{Sơ đồ luồng vận hành khép kín 5 giai đoạn của AR-IMMS}
+\end{figure}
+
+\section{Phân tích chi tiết 5 giai đoạn quy trình}
+
+\subsection{Giai đoạn 1: Thu thập Dữ liệu \& Giám sát (Data Collection \& Monitoring)}
+\begin{itemize}
+    \item \textbf{Tác nhân tham gia:} Monitoring Agent (Tự động), System Operator, Digital Twin Engine.
+    \item \textbf{Mô tả chi tiết:}
+    \begin{enumerate}
+        \item \textbf{Thu thập tự động:} Monitoring Agent được cài đặt trên từng máy chủ trong Mini Data Center Testbed tự động đọc thông số phần cứng (CPU, RAM, Nhiệt độ, Disk, Network) và thông tin Docker container. Dữ liệu được đóng gói thành các chuỗi JSON telemetry và truyền về Backend API qua kết nối mTLS / WebSocket theo chu kỳ định sẵn (mặc định 5 giây/lần).
+        \item \textbf{Cập nhật giao diện \& Digital Twin:} Backend API tiếp nhận dữ liệu, lưu vào cơ sở dữ liệu chuỗi thời gian (Time-series Data) và thực hiện phát dòng (broadcast) qua WebSocket Gateway tới Web Command Center. Giao diện bảng điều khiển và cây phân cấp Digital Twin ($\text{Site} \rightarrow \text{Room} \rightarrow \text{Rack} \rightarrow \text{Server} \rightarrow \text{Workload}$) lập tức cập nhật chỉ số biểu đồ và màu sắc trạng thái.
+        \item \textbf{Giám sát kết nối ngầm:} Hệ thống chạy một tiến trình kiểm tra (Heartbeat Monitor). Nếu vượt quá 90 giây liên tục không nhận được bất kỳ dữ liệu telemetry nào từ một Agent, hệ thống tự động chuyển trạng thái của Server đó sang \textit{Unavailable} (Mất kết nối).
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Giai đoạn 2: Phát hiện Sự cố \& Phát Cảnh báo (Incident Detection \& Alerting)}
+\begin{itemize}
+    \item \textbf{Tác nhân tham gia:} Automated Monitoring Engine, System Operator.
+    \item \textbf{Mô tả chi tiết:}
+    \begin{enumerate}
+        \item \textbf{So sánh ngưỡng tự động:} Ngay khi nhận được bản tin telemetry, Monitoring Engine tiến hành so sánh chỉ số với bảng quy tắc ngưỡng (ví dụ: CPU usage $> 90\%$, Nhiệt độ $> 75^\circ\text{C}$).
+        \item \textbf{Tạo Alert \& Khử trùng lặp:} Khi phát hiện chỉ số bất thường, hệ thống tự động khởi tạo bản ghi Cảnh báo mới ở trạng thái \textit{Open}. Nếu điều kiện bất thường kéo dài qua nhiều chu kỳ gửi dữ liệu, thuật toán khử trùng lặp (Alert Storm Suppression) sẽ gộp các sự cố trùng vào cảnh báo đang tồn tại thay vì tạo hàng loạt bản ghi mới.
+        \item \textbf{Hiển thị vị trí không gian:} Cảnh báo được làm nổi bật bằng mã màu quy ước (Vàng: Warning, Đỏ: Critical) trên Web Dashboard và phát sáng nhấp nháy tại vị trí tương ứng trên mô hình Digital Twin.
+        \item \textbf{Xác nhận tiếp nhận:} Chuyên viên vận hành (System Operator) quan sát được cảnh báo trên màn hình chỉ huy và nhấn nút \textbf{Xác nhận (Acknowledge)} để ghi nhận hệ thống đang xem xét sự cố. Trạng thái Alert chuyển thành \textit{Acknowledged}.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Giai đoạn 3: Quản lý \& Phân công Phiếu Hỗ trợ (Ticket Creation \& Assignment)}
+\begin{itemize}
+    \item \textbf{Tác nhân tham gia:} System Operator, Field Technician.
+    \item \textbf{Mô tả chi tiết:}
+    \begin{enumerate}
+        \item \textbf{Khởi tạo Ticket bảo trì:} Từ cảnh báo đã được xác nhận (hoặc qua yêu cầu bảo trì định kỳ), Operator chọn chức năng "Tạo Ticket". Hệ thống tự động trích xuất các thông tin ngữ cảnh: Mã máy chủ, Vị trí phòng/rack, Loại lỗi, Thời gian phát sinh và Chỉ số telemetry tại thời điểm bị lỗi vào nội dung Ticket.
+        \item \textbf{Phân công nhân sự:} Operator lựa chọn Kỹ thuật viên hiện trường (Field Technician) đang trong ca trực và nhấn "Giao việc". Trạng thái Ticket chuyển thành \textit{Assigned}.
+        \item \textbf{Tiếp nhận thông báo di động:} Kỹ thuật viên nhận được thông báo đẩy (Push Notification) trên ứng dụng di động AR. Kỹ thuật viên mở app để xem danh sách nhiệm vụ, vị trí chính xác của tủ Rack và Server cần kiểm tra.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Giai đoạn 4: Xử lý Sự cố Tại chỗ bằng AR (On-site AR Field Maintenance)}
+\begin{itemize}
+    \item \textbf{Tác nhân tham gia:} Field Technician, Mobile AR Application, Backend API.
+    \item \textbf{Mô tả chi tiết:}
+    \begin{enumerate}
+        \item \textbf{Định vị \& Quét thiết bị:} Kỹ thuật viên di chuyển tới phòng máy chủ, tìm đến vị trí tủ Rack và sử dụng ứng dụng di động AR để quét mã QR / ArUco Marker được dán phía trước máy chủ.
+        \item \textbf{Hiển thị lớp phủ AR (AR Overlay):} Ứng dụng di động nhận diện mã marker, truy vấn dữ liệu từ Backend API và hiển thị ngay trên màn hình camera các thẻ thông tin kỹ thuật số bao gồm: Tên thiết bị, Chỉ số CPU/RAM/Temp thời gian thực, Danh sách container/workload đang chạy và thông tin cảnh báo active.
+        \item \textbf{Thực hiện thao tác \& Xác thực 2 bước (Step-up Verification):} Kỹ thuật viên thực hiện kiểm tra phần cứng, cắm lại cáp hoặc thực hiện thao tác can thiệp dịch vụ (ví dụ: Khởi động lại container). Nếu thực hiện thao tác can thiệp có tính rủi ro trên ứng dụng AR, ứng dụng sẽ yêu cầu xác thực 2 bước để phòng ngừa bấm nhầm.
+        \item \textbf{Ghi nhận nguyên nhân \& Tiến độ:} Kỹ thuật viên nhập ghi chú chẩn đoán, nguyên nhân sự cố và kết quả sửa chữa trực tiếp trên ứng dụng di động. Trạng thái Ticket chuyển thành \textit{In-Progress}.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Giai đoạn 5: Đóng Sự cố \& Kiểm toán Hệ thống (Resolution \& Audit Trail)}
+\begin{itemize}
+    \item \textbf{Tác nhân tham gia:} Field Technician, System Operator, Audit Log Module.
+    \item \textbf{Mô tả chi tiết:}
+    \begin{enumerate}
+        \item \textbf{Yêu cầu đóng Ticket:} Sau khi khắc phục xong sự cố tại chỗ, Kỹ thuật viên đánh dấu công việc hoàn thành trên app AR và nhấn \textbf{Gửi yêu cầu đóng Ticket (Closure Request)}. Trạng thái Ticket chuyển thành \textit{Resolved}.
+        \item \textbf{Nghiệm thu \& Phê duyệt:} System Operator kiểm tra lại chỉ số telemetry thời gian thực của máy chủ đó trên Web Command Center. Khi xác nhận thông số đã trở về ngưỡng an toàn (màu xanh), Operator nhấn nút \textbf{Phê duyệt đóng Ticket}. Trạng thái Ticket và Alert chính thức chuyển thành \textit{Closed}.
+        \item \textbf{Ghi nhật ký kiểm toán bất biến (Immutable Audit Log):} Toàn bộ mốc thời gian, dữ liệu telemetry tại thời điểm sự cố, danh tính người tiếp nhận, nhật ký quét AR và các hành động khắc phục được tự động lưu trữ vĩnh viễn vào Audit Trail của hệ thống, phục vụ công tác truy vết và lập báo cáo thống kê PUE.
+    \end{enumerate}
+\end{itemize}
+
+\section{Bảng ma trận phân vùng trách nhiệm (RACI Matrix)}
+Bảng dưới đây mô tả sự phân công trách nhiệm giữa các bên đối với từng hành động chính trong quy trình dịch vụ:
+\begin{itemize}
+    \item \textbf{R (Responsible):} Người trực tiếp thực hiện công việc.
+    \item \textbf{A (Accountable):} Người chịu trách nhiệm phê duyệt cuối cùng.
+    \item \textbf{C (Consulted):} Người cung cấp thông tin/tư vấn.
+    \item \textbf{I (Informed):} Người nhận thông báo kết quả.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
+\hline
+\textbf{Giai đoạn / Hành động nghiệp vụ} & \textbf{Admin} & \textbf{Operator} & \textbf{Technician} & \textbf{Agent (Auto)} \\ \hline
+Thu thập Telemetry \& Kiểm tra Heartbeat & I & I & - & R / A \\ \hline
+Cấu hình ngưỡng cảnh báo hệ thống & A & R & C & - \\ \hline
+Phát hiện vượt ngưỡng \& Khởi tạo Alert & I & I & - & R / A \\ \hline
+Xác nhận Alert (Acknowledge) & I & R / A & I & - \\ \hline
+Tạo phiếu Ticket \& Phân công nhân sự & I & R / A & I & - \\ \hline
+Quét mã AR, kiểm tra & I & I & R / A & - \\ \hline
+Thực hiện thao tác sửa chữa & I & I & R / A & - \\ \hline
+Nghiệm thu \& Phê duyệt đóng Ticket & I & R / A & C & - \\ \hline
+Ghi nhật ký kiểm toán Audit Log & I & I & I & R / A \\ \hline
+\end{tabularx}
+\caption{Ma trận phân công trách nhiệm RACI cho quy trình vận hành AR-IMMS}
+\end{table}
+

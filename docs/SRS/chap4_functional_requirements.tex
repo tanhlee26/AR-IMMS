@@ -1,0 +1,106 @@
+\chapter{YÊU CẦU CHỨC NĂNG}
+
+Chương này đặc tả danh mục đầy đủ các yêu cầu chức năng (\textit{Functional Requirements - FR}) của hệ thống AR-IMMS từ FR-01 đến FR-32, phân chia chi tiết theo 10 phân hệ nghiệp vụ phần mềm.
+
+\section{Phân hệ 1: Xác thực và Phân quyền (Authentication \& RBAC)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-01} & Đăng nhập hệ thống & Hệ thống cho phép người dùng (Admin, Operator, Technician) đăng nhập bằng tài khoản và mật khẩu. Sau khi xác thực thành công, hệ thống cấp phát JSON Web Token (JWT) và định tuyến đến giao diện tương ứng với vai trò. \\ \hline
+\textbf{FR-02} & Quản lý phiên làm việc \& Đăng xuất & Hệ thống hỗ trợ đăng xuất, hủy JWT token hiện tại và tự động ngắt phiên làm việc sau một khoảng thời gian không hoạt động (Inactivity Timeout). \\ \hline
+\textbf{FR-03} & Phân quyền truy cập dựa trên vai trò (RBAC) & Hệ thống kiểm soát quyền truy cập tài nguyên API và chức năng UI theo vai trò: Administrator có toàn quyền; Operator có quyền quản lý vận hành, tài sản, ticket; Technician có quyền tiếp nhận ticket và sử dụng ứng dụng AR. \\ \hline
+\textbf{FR-04} & Quản lý tài khoản người dùng & Cho phép Administrator khởi tạo tài khoản mới, cập nhật thông tin cá nhân, gán/thay đổi vai trò, đặt lại mật khẩu và khóa/mở khóa tài khoản. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 2: Quản lý Cơ sở hạ tầng Phân cấp (Infrastructure Management)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-05} & Quản lý Site \& Room & Cho phép Operator khởi tạo, chỉnh sửa, xóa và truy vấn thông tin các vị trí trung tâm dữ liệu (Site) và các phòng chứa máy chủ (Room). \\ \hline
+\textbf{FR-06} & Quản lý tủ Rack & Cho phép Operator thêm mới tủ Rack vào phòng máy, khai báo thông số chiều cao (U-size), vị trí tọa độ trong phòng và sức chứa tối đa. \\ \hline
+\textbf{FR-07} & Quản lý Server/Node & Cho phép Operator đăng ký nút máy chủ mới, khai báo vị trí số U trong tủ Rack, thông số phần cứng (CPU cores, RAM size, Disk capacity, IP address). \\ \hline
+\textbf{FR-08} & Quản lý Container/Workload & Cho phép hệ thống ghi nhận các ứng dụng, dịch vụ hoặc Docker container đang vận hành trên từng nút máy chủ. \\ \hline
+\textbf{FR-09} & Ánh xạ QR/ArUco Marker & Cho phép Operator tạo mã định danh duy nhất và liên kết thông tin mã QR/ArUco Marker với nút máy chủ vật lý tương ứng phục vụ quét nhận diện trên app AR. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 3: Giám sát và Thu thập Telemetry (Telemetry Monitoring)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-10} & Thu thập dữ liệu Telemetry & Monitoring Agent tự động thu thập thông số CPU, RAM, Nhiệt độ, Disk, Network và trạng thái Docker container từ máy chủ, gửi về Backend API qua mTLS/WebSocket theo chu kỳ mặc định 5 giây. \\ \hline
+\textbf{FR-11} & Phát dòng dữ liệu thời gian thực & Backend API chuyển tiếp dữ liệu telemetry tới Web Command Center qua kết nối WebSocket/Socket.IO để vẽ đồ thị diễn biến thời gian thực mà không cần tải lại trang. \\ \hline
+\textbf{FR-12} & Lưu trữ dữ liệu lịch sử Telemetry & Hệ thống lưu trữ các bản ghi telemetry thu thập được vào CSDL chuỗi thời gian (Time-series DB) phục vụ việc tra cứu diễn biến trong quá khứ và lập báo cáo. \\ \hline
+\textbf{FR-13} & Phát hiện ngắt kết nối Agent & Hệ thống tự động theo dõi kết nối Agent. Nếu quá 90 giây không nhận được telemetry từ một máy chủ, hệ thống cập nhật trạng thái máy chủ đó thành Unavailable và phát cảnh báo mất kết nối. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 4: Mô hình số Digital Twin (Digital Twin Engine)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-14} & Trực quan hóa cây cấu trúc Digital Twin & Cho phép hiển thị mô hình cây tài sản 3D/2D tương tác theo cấu trúc phân cấp: Site $\rightarrow$ Room $\rightarrow$ Rack $\rightarrow$ Server $\rightarrow$ Workload. \\ \hline
+\textbf{FR-15} & Đồng bộ trạng thái kỹ thuật số & Hệ thống cập nhật màu sắc hiển thị của thiết bị trên Digital Twin tương ứng với trạng thái vận hành thời gian thực (Xanh: Healthy, Vàng: Warning, Đỏ: Critical, Xám: Unavailable). \\ \hline
+\textbf{FR-16} & Khoan sâu dữ liệu (Drill-down Navigation) & Hỗ trợ thao tác nhấp chuột "3-click drill-down" từ mức tổng quan toàn Site xuống phòng máy, tủ Rack, từng máy chủ và đến từng log container đang chạy. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 5: Quản lý Cảnh báo (Alert Management)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-17} & Cấu hình ngưỡng cảnh báo & Cho phép Operator thiết lập và thay đổi các ngưỡng cảnh báo cho từng chỉ số (ví dụ: CPU Warning $> 80\%$, CPU Critical $> 90\%$, Nhiệt độ $> 75^\circ\text{C}$). \\ \hline
+\textbf{FR-18} & Tự động sinh Cảnh báo & Hệ thống tự động khởi tạo bản ghi Alert mới ở trạng thái \textit{Open} ngay khi phát hiện chỉ số thu thập vượt ngưỡng cấu hình hoặc mất kết nối. \\ \hline
+\textbf{FR-19} & Lọc trùng lặp cảnh báo (Alert Suppression) & Hệ thống áp dụng thuật toán khử trùng lặp để ngăn chặn hiện tượng "bão cảnh báo" (Alert Storm), gộp các bất thường liên tục trên cùng thiết bị vào 1 Alert duy nhất. \\ \hline
+\textbf{FR-20} & Quản lý vòng đời Alert & Cho phép Operator xem danh sách Alert, nhấn nút Xác nhận (Acknowledge), cập nhật trạng thái thành Resolved hoặc Closed khi sự cố đã được khắc phục. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 6: Quản lý Sự cố (Incident Management)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-21} & Chuyển đổi Alert thành Incident & Cho phép Operator khởi tạo một bản ghi Sự cố (Incident) từ một Alert đang hoạt động, tự động kế thừa toàn bộ thông tin mã máy chủ, vị trí và mức độ nghiêm trọng. \\ \hline
+\textbf{FR-22} & Phân loại \& Đánh giá mức độ ưu tiên & Cho phép thiết lập mức độ ưu tiên xử lý sự cố (Low, Medium, High, Critical) và gán thời gian cam kết khắc phục (SLA). \\ \hline
+\textbf{FR-23} & Theo dõi tiến độ giải quyết Incident & Cho phép người quản lý theo dõi toàn bộ quá trình xử lý sự cố từ lúc phát sinh, phân công cho đến khi kiểm tra nghiệm thu hoàn thành. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 7: Quản lý Bảo trì (Ticket Management)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-24} & Khởi tạo phiếu Ticket bảo trì & Cho phép Operator tạo Ticket xử lý sự cố hoặc Ticket bảo trì định kỳ, điền mô tả công việc, đính kèm tài liệu hướng dẫn và chọn thiết bị mục tiêu. \\ \hline
+\textbf{FR-25} & Phân công Ticket cho Kỹ thuật viên & Cho phép Operator giao Ticket cho Kỹ thuật viên hiện trường. Hệ thống tự động gửi thông báo đẩy tới ứng dụng di động của Kỹ thuật viên đó. \\ \hline
+\textbf{FR-26} & Cập nhật tiến độ \& Yêu cầu đóng Ticket & Cho phép Technician cập nhật trạng thái công việc (In-Progress, Resolved), ghi nhận nguyên nhân, hành động khắc phục và gửi yêu cầu phê duyệt đóng Ticket tới Operator. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 8: Quản lý Tài sản và Bảo hành (Asset Lifecycle)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-27} & Quản lý thông tin bảo hành & Cho phép lưu trữ và tra cứu nhà cung cấp, ngày mua, thời hạn bảo hành, hợp đồng dịch vụ đi kèm của từng máy chủ và thiết bị hạ tầng. \\ \hline
+\textbf{FR-28} & Quản lý lịch sử thay thế linh kiện & Cho phép ghi nhận nhật ký thay thế, nâng cấp linh kiện (RAM, CPU, Hard Drive, PSU) của từng thiết bị trong suốt vòng đời vận hành. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 9: Ứng dụng Thực tế Tăng cường (Mobile AR Application)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-29} & Quét nhận diện QR/ArUco Marker & Ứng dụng AR trên thiết bị di động sử dụng camera để quét mã QR hoặc ArUco Marker gắn trên vỏ máy chủ vật lý, nhận diện chính xác ID thiết bị trong thời gian $< 1$ giây. \\ \hline
+\textbf{FR-30} & Hiển thị thông tin lớp phủ AR (Overlay) & Sau khi nhận diện thiết bị, app hiển thị lớp phủ dữ liệu ảo (AR Overlay) bao gồm: Tên máy chủ, chỉ số CPU/RAM/Temp trực tiếp, các cảnh báo active và log dịch vụ tương ứng. \\ \hline
+\end{longtable}
+
+\section{Phân hệ 10: Báo cáo và Nhật ký Kiểm toán (Reporting \& Audit Trail)}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Mã YCKT} & \textbf{Tên chức năng} & \textbf{Mô tả yêu cầu chi tiết} \\ \hline
+\endhead
+\textbf{FR-31} & Thống kê \& Báo cáo vận hành & Cho phép tạo và xuất các báo cáo định kỳ về tình hình telemetry, số lượng sự cố, chỉ số MTTR và hiệu năng PUE dưới dạng PDF hoặc Excel. \\ \hline
+\textbf{FR-32} & Ghi nhật ký kiểm toán (Audit Trail) & Hệ thống tự động ghi lại tất cả các hành động tác động hệ thống (thay đổi cấu hình, tạo/duyệt ticket, xác thực AR) thành bản ghi Audit Log bất biến không thể sửa xóa. \\ \hline
+\end{longtable}
+

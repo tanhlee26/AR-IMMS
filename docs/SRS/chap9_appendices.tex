@@ -1,0 +1,78 @@
+\chapter{PHỤ LỤC}
+
+Chương này cung cấp các bảng phụ lục tổng hợp bao gồm Từ điển Actor, Danh mục Use Case và Ma trận Truy vết Yêu cầu (\textit{Requirements Traceability Matrix}) liên kết giữa Yêu cầu Chức năng (FR) và đặc tả Use Case (UC).
+
+\section{Phụ lục A: Từ điển Tác nhân (Actor Dictionary)}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{7.5cm}|}
+\hline
+\textbf{Tên Tác nhân} & \textbf{Loại Tác nhân} & \textbf{Mô tả phạm vi quyền hạn} \\ \hline
+Quản trị viên (Admin) & Human Actor & Quyền hạn hệ thống cao nhất: quản lý người dùng, phân quyền RBAC, theo dõi Audit Log. \\ \hline
+Chuyên viên Vận hành (Operator) & Human Actor & Quản lý cơ sở hạ tầng, giám sát telemetry, cấu hình ngưỡng, xử lý alert, tạo và duyệt ticket. \\ \hline
+Kỹ thuật viên hiện trường (Technician) & Human Actor & Tiếp nhận ticket, sử dụng ứng dụng di động AR quét thiết bị, thực hiện bảo trì, yêu cầu đóng ticket. \\ \hline
+Monitoring Agent & System / IoT Actor & Tiến trình tự động thu thập thông số phần cứng/OS/Docker và đẩy dữ liệu về Backend. \\ \hline
+\end{tabular}
+\caption{Từ điển tác nhân trong hệ thống AR-IMMS}
+\end{table}
+
+\section{Phụ lục B: Danh mục Use Case (Use Case Catalog)}
+\begin{longtable}{|p{1.5cm}|p{4.5cm}|p{3.5cm}|p{5cm}|}
+\hline
+\textbf{Mã UC} & \textbf{Tên Use Case} & \textbf{Tác nhân chính} & \textbf{Phân hệ tương ứng} \\ \hline
+\endhead
+UC-01 & Đăng nhập hệ thống & Admin, Operator, Tech & Xác thực \& RBAC \\ \hline
+UC-02 & Đăng xuất hệ thống & Admin, Operator, Tech & Xác thực \& RBAC \\ \hline
+UC-03 & Đặt lại mật khẩu & Admin, Operator, Tech & Xác thực \& RBAC \\ \hline
+UC-04 & Quản lý tài khoản người dùng & Administrator & Xác thực \& RBAC \\ \hline
+UC-05 & Thêm tài sản / máy chủ & System Operator & Quản lý Cơ sở hạ tầng \\ \hline
+UC-06 & Cập nhật thông tin tài sản & System Operator & Quản lý Cơ sở hạ tầng \\ \hline
+UC-07 & Xóa / Vô hiệu hóa tài sản & System Operator & Quản lý Cơ sở hạ tầng \\ \hline
+UC-08 & Xem danh sách tài sản & Operator, Technician & Quản lý Cơ sở hạ tầng \\ \hline
+UC-09 & Gán mã QR/ArUco Marker & System Operator & Quản lý Cơ sở hạ tầng \& AR \\ \hline
+UC-10 & Xem Dashboard giám sát & Operator, Admin & Giám sát Telemetry \\ \hline
+UC-11 & Xem chi tiết thông số Server & Operator, Technician & Giám sát Telemetry \\ \hline
+UC-12 & Cấu hình ngưỡng cảnh báo & System Operator, Admin & Quản lý Cảnh báo \\ \hline
+UC-13 & Nhận thông báo Cảnh báo & Operator, Technician & Quản lý Cảnh báo \\ \hline
+UC-14 & Xem danh sách Cảnh báo & Operator, Technician & Quản lý Cảnh báo \\ \hline
+UC-15 & Xác nhận Cảnh báo (Acknowledge) & System Operator & Quản lý Cảnh báo \\ \hline
+UC-16 & Xử lý \& Đóng cảnh báo & System Operator & Quản lý Cảnh báo \\ \hline
+UC-17 & Khởi tạo Ticket bảo trì & System Operator & Quản lý Ticket \\ \hline
+UC-18 & Phân công Ticket bảo trì & System Operator & Quản lý Ticket \\ \hline
+UC-19 & Cập nhật tiến độ Ticket & Field Technician & Quản lý Ticket \\ \hline
+UC-20 & Xem lịch sử Ticket bảo trì & Admin, Operator, Tech & Quản lý Ticket \\ \hline
+UC-21 & Quét \& Xem AR Overlay & Field Technician & Ứng dụng AR di động \\ \hline
+UC-22 & Điều hướng AR trong phòng & Field Technician & Ứng dụng AR di động \\ \hline
+UC-23 & Xác thực 2 bước trên AR & Field Technician & Ứng dụng AR di động \\ \hline
+UC-24 & Lập báo cáo vận hành & Operator, Admin & Báo cáo \& Thống kê \\ \hline
+UC-25 & Xuất báo cáo PDF/Excel & Operator, Admin & Báo cáo \& Thống kê \\ \hline
+UC-26 & Xem nhật ký Audit Log & Administrator & Báo cáo \& Kiểm toán \\ \hline
+\end{longtable}
+
+\section{Phụ lục C: Ma trận Truy vết Yêu cầu (Traceability Matrix)}
+Ma trận dưới đây thể hiện sự ánh xạ 1-1 và 1-nhiều giữa Yêu cầu Chức năng (FR) và các Use Case (UC) tương ứng:
+
+\begin{longtable}{|p{2.5cm}|p{7.5cm}|p{4.5cm}|}
+\hline
+\textbf{Mã YCKT (FR)} & \textbf{Tên Yêu cầu Chức năng} & \textbf{Mã Use Case (UC) đáp ứng} \\ \hline
+\endhead
+FR-01, FR-02 & Đăng nhập, đăng xuất, quản lý phiên & UC-01, UC-02, UC-03 \\ \hline
+FR-03, FR-04 & Phân quyền RBAC, quản lý tài khoản & UC-04 \\ \hline
+FR-05, FR-06 & Quản lý Site, Room, tủ Rack & UC-05, UC-06, UC-07, UC-08 \\ \hline
+FR-07, FR-08 & Quản lý Server, Container workload & UC-05, UC-06, UC-08, UC-11 \\ \hline
+FR-09 & Ánh xạ QR/ArUco Marker cho máy chủ & UC-09, UC-21 \\ \hline
+FR-10, FR-11 & Thu thập telemetry, phát dòng WebSocket & UC-10, UC-11 \\ \hline
+FR-12, FR-13 & Lưu lịch sử telemetry, ngắt kết nối & UC-10, UC-11, UC-13 \\ \hline
+FR-14, FR-15 & Dựng Digital Twin, đồng bộ trạng thái & UC-10, UC-11 \\ \hline
+FR-16 & Khoan sâu dữ liệu (Drill-down) & UC-10, UC-11 \\ \hline
+FR-17, FR-18 & Cấu hình ngưỡng, tự động sinh Alert & UC-12, UC-13, UC-14 \\ \hline
+FR-19, FR-20 & Khử bão cảnh báo, quản lý vòng đời Alert & UC-14, UC-15, UC-16 \\ \hline
+FR-21, FR-22 & Tạo Incident từ Alert, gán ưu tiên SLA & UC-17 \\ \hline
+FR-23 & Theo dõi tiến độ giải quyết Incident & UC-17, UC-20 \\ \hline
+FR-24, FR-25 & Tạo Ticket bảo trì, gán cho Kỹ thuật viên & UC-17, UC-18 \\ \hline
+FR-26 & Cập nhật tiến độ \& Yêu cầu đóng Ticket & UC-19, UC-20 \\ \hline
+FR-27, FR-28 & Quản lý bảo hành, lịch sử linh kiện & UC-08, UC-20 \\ \hline
+FR-29, FR-30 & Quét AR Marker, hiển thị AR Overlay & UC-21, UC-22, UC-23 \\ \hline
+FR-31, FR-32 & Báo cáo vận hành, Audit Log kiểm toán & UC-24, UC-25, UC-26 \\ \hline
+\end{longtable}
+

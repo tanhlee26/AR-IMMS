@@ -1,0 +1,50 @@
+\chapter{YÊU CẦU PHI CHỨC NĂNG}
+
+Chương này đặc tả đầy đủ các yêu cầu phi chức năng (\textit{Non-Functional Requirements - NFR}) đóng vai trò định hình kiến trúc kỹ thuật và tiêu chuẩn chất lượng vận hành của hệ thống AR-IMMS.
+
+\section{Yêu cầu về Hiệu năng (Performance Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-PERF-01 (Chu kỳ Telemetry):} Monitoring Agent trên các máy chủ phải thu thập và gửi dữ liệu telemetry về Backend theo chu kỳ có thể định cấu hình, với giá trị mặc định là \textbf{5 giây/lần}.
+    \item \textbf{NFR-PERF-02 (Thời gian phát hiện ngắt kết nối):} Nếu Backend không nhận được bản tin telemetry từ một máy chủ trong thời gian quá \textbf{90 giây}, hệ thống phải ngay lập tức chuyển trạng thái máy chủ đó thành \textit{Unavailable} và kích hoạt cảnh báo tương ứng.
+    \item \textbf{NFR-PERF-03 (Độ trễ truyền tải dữ liệu thời gian thực):} Độ trễ phân phối dữ liệu từ Backend tới giao diện Web Command Center và ứng dụng di động AR qua WebSocket không được vượt quá \textbf{500 ms} trong điều kiện mạng nội bộ LAN/Wi-Fi.
+    \item \textbf{NFR-PERF-04 (Tốc độ nhận diện mã AR):} Ứng dụng di động AR phải hoàn tất việc phát hiện và giải mã mã QR / ArUco Marker trong thời gian dưới \textbf{1.0 giây} kể từ khi mã xuất hiện rõ ràng trong khung hình camera.
+\end{itemize}
+
+\section{Yêu cầu về Tính sẵn sàng (Availability Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-AVAIL-01 (Độ sẵn sàng hệ thống):} Hệ thống AR-IMMS phải đạt độ sẵn sàng tối thiểu \textbf{99.5\%} trong khoảng thời gian làm việc chuẩn của Data Center.
+    \item \textbf{NFR-AVAIL-02 (Phát hiện sự cố ngắt kết nối):} Hệ thống phải chủ động phát hiện và phát thông báo tức thời cho người vận hành ngay khi bất kỳ dịch vụ core backend hoặc kết nối của Collector Agent bị gián đoạn.
+\end{itemize}
+
+\section{Yêu cầu về Bảo mật (Security Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-SEC-01 (Xác thực và Phân quyền RBAC):} Tất cả các yêu cầu truy cập API và giao diện phải được xác thực bằng JSON Web Token (JWT) và kiểm soát quyền hạn nghiêm ngặt theo các vai trò Administrator, System Operator, Field Technician.
+    \item \textbf{NFR-SEC-02 (Bảo mật kênh truyền Agent mTLS):} Quá trình truyền dữ liệu giữa các Monitoring Agent và Backend API bắt buộc phải sử dụng mã hóa TLS hai chiều (mutual TLS - mTLS) để đảm bảo tính xác thực của thiết bị thu thập và chống giả mạo telemetry.
+    \item \textbf{NFR-SEC-03 (Nhật ký kiểm toán không thể sửa xóa):} Mọi thao tác thay đổi cấu hình hệ thống, thiết lập ngưỡng, khởi tạo/duyệt Ticket bảo trì và các thao tác can thiệp từ xa trên app AR bắt buộc phải được ghi lại vĩnh viễn trong nhật ký kiểm toán (Immutable Audit Log).
+\end{itemize}
+
+\section{Yêu cầu về Độ tin cậy (Reliability Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-REL-01 (Tự động thử lại kết nối):} Khi bị mất kết nối mạng tạm thời, Monitoring Agent phải có cơ chế lưu đệm (buffer) dữ liệu telemetry cục bộ và tự động thử lại (retry) khi kết nối tới Backend được khôi phục mà không làm mất mát dữ liệu.
+    \item \textbf{NFR-REL-02 (Lọc bão cảnh báo - Alert Storm Suppression):} Hệ thống phải áp dụng cơ chế lọc trùng lặp cảnh báo, đảm bảo khi một sự cố kéo dài không sinh ra hàng trăm cảnh báo rác gây tràn ngập bảng điều khiển.
+    \item \textbf{NFR-REL-03 (Quy trình quản lý Ticket khép kín):} Mọi phiếu bảo trì phải tuân thủ nghiêm ngặt vòng đời trạng thái khép kín: Open $\rightarrow$ Assigned $\rightarrow$ In-Progress $\rightarrow$ Resolved $\rightarrow$ Closed. Không cho phép đóng ticket nếu chưa được phê duyệt nghiệm thu từ Operator.
+\end{itemize}
+
+\section{Yêu cầu về Khả năng mở rộng (Scalability Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-SCAL-01 (Tự động phát hiện nút mới - Auto Onboarding):} Thử nghiệm Proof of Concept (PoC) phải chứng minh rằng khi một nút máy chủ mới được đăng ký và cài đặt Agent, thiết bị phải tự động stream telemetry và hiển thị trên sơ đồ Digital Twin trong thời gian dưới \textbf{5 phút}.
+    \item \textbf{NFR-SCAL-02 (Không sửa đổi mã nguồn cốt lõi):} Quá trình thêm máy chủ mới hoặc mở rộng thêm tủ Rack chỉ yêu cầu cấu hình thông tin định danh và tài khoản kết nối, tuyệt đối không được yêu cầu biên dịch lại hoặc sửa đổi mã nguồn các dịch vụ cốt lõi Backend.
+\end{itemize}
+
+\section{Yêu cầu về Tính dễ sử dụng (Usability Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-USE-01 (Giao diện Web Command Center):} Giao diện Web được thiết kế tối ưu cho máy tính để bàn (Desktop-first), ngôn ngữ hiển thị ưu tiên là Tiếng Anh kỹ thuật chuẩn, bố cục responsive, làm nổi bật màu sắc trạng thái sức khỏe của các thiết bị.
+    \item \textbf{NFR-USE-02 (Giao diện Mobile AR):} Ứng dụng di động AR chạy trên hệ điều hành Android, có giao diện trực quan, phông chữ và thẻ thông số số liệu ảo hiển thị rõ ràng trên nền video camera thực tế.
+\end{itemize}
+
+\section{Yêu cầu về Khả năng bảo trì và An toàn (Maintainability \& Safety Requirements)}
+\begin{itemize}
+    \item \textbf{NFR-MAINT-01 (Tập trung log hệ thống):} Toàn bộ log hoạt động của các dịch vụ Backend và Agent phải được tập trung về một hệ thống quản lý log phục vụ việc tra cứu và chẩn đoán lỗi phần mềm.
+    \item \textbf{NFR-MAINT-02 (An toàn thao tác hiện trường - Step-up Verification):} Đối với các thao tác can thiệp hệ thống nguy hiểm trên ứng dụng di động AR (như khởi động lại dịch vụ hoặc shutdown container), ứng dụng bắt buộc phải yêu cầu xác thực 2 bước (Step-up Verification) để tránh thao tác nhầm lẫn từ kỹ thuật viên.
+\end{itemize}
+

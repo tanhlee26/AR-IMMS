@@ -1,0 +1,76 @@
+\chapter{GIỚI THIỆU}
+
+\section{Mục đích}
+Trong các trung tâm dữ liệu (Data Center) hiện đại, số lượng máy chủ, thiết bị hạ tầng và dịch vụ ngày càng tăng, khiến việc giám sát và bảo trì cơ sở hạ tầng trở nên vô cùng phức tạp. Các hệ thống quản lý hiện nay thường sử dụng các bảng điều khiển (dashboard) trên nền tảng web để hiển thị trạng thái máy chủ, mức sử dụng tài nguyên và các cảnh báo. Tuy nhiên, thông tin trên giao diện quản lý thường bị tách biệt hoàn toàn với vị trí không gian vật lý của thiết bị, gây khó khăn lớn cho kỹ thuật viên khi cần định vị và xử lý một thiết bị cụ thể tại hiện trường.
+
+Nghiên cứu của Gomes, Toosi và Ens chỉ ra rằng mô hình \textit{Digital Twin} có thể được sử dụng để trực quan hóa và hỗ trợ giám sát, quản lý tài nguyên hiệu quả trong môi trường Cloud Data Centre. Bên cạnh đó, các nghiên cứu của Buchner et al. và Eversberg et al. chứng minh việc kết hợp Thực tế Tăng cường (\textit{Augmented Reality - AR}) với Digital Twin đem lại khả năng cung cấp thông tin theo ngữ cảnh không gian trực tiếp tại hiện trường, giúp rút ngắn thời gian xử lý sự cố thủ công và giảm thiểu rủi ro thao tác sai.
+
+Từ các cơ sở lý luận và thực tiễn trên, đề tài \textbf{“Hệ thống Giám sát và Bảo trì Cơ sở Hạ tầng Tích hợp Thực tế Tăng cường (AR-IMMS)”} được xây dựng nhằm kết hợp Digital Twin, dữ liệu đo đạc thời gian thực (telemetry streaming) và công nghệ AR để tạo ra một nền tảng hỗ trợ toàn diện cho công tác quản lý hạ tầng và bảo trì thiết bị.
+
+Mục đích chính của tài liệu Đặc tả Yêu cầu Phần mềm (SRS) này là:
+\begin{itemize}
+    \item Xác định chi tiết và đầy đủ các yêu cầu chức năng, yêu cầu phi chức năng và quy tắc nghiệp vụ cho hệ thống AR-IMMS.
+    \item Làm cơ sở thống nhất giữa các bên liên quan (Quản trị viên, Chuyên viên vận hành, Kỹ thuật viên hiện trường và Nhóm phát triển phần mềm).
+    \item Cung cấp chuẩn mực để tiến hành kiểm thử, nghiệm thu và đánh giá hệ thống trên mô hình thử nghiệm Mini Data Center Testbed.
+\end{itemize}
+
+\section{Phạm vi của hệ thống}
+Phạm vi của hệ thống AR-IMMS tập trung vào việc xây dựng một nền tảng giám sát và bảo trì cơ sở hạ tầng cho môi trường Mini Data Center. Do việc triển khai và đánh giá trực tiếp trên trung tâm dữ liệu thực tế vượt quá phạm vi nguồn lực của dự án, hệ thống được cài đặt và thử nghiệm trên mô hình \textbf{Mini Data Center Testbed}, trong đó các máy tính vật lý đại diện cho máy chủ (Server/Node), các nhóm thiết bị đại diện cho tủ Rack, và các ứng dụng/dịch vụ container đại diện cho Workload.
+
+Hệ thống bao gồm 8 nhóm phạm vi chức năng chính:
+\begin{enumerate}
+    \item \textbf{Quản lý người dùng và phân quyền:} Hỗ trợ 3 nhóm người dùng chính là Administrator, Operator và Technician thông qua cơ chế kiểm soát truy cập dựa trên vai trò (RBAC) và xác thực JWT.
+    \item \textbf{Quản lý cơ sở hạ tầng phân cấp:} Quản lý tài sản theo cấu trúc Digital Twin: $\text{Site} \rightarrow \text{Room} \rightarrow \text{Rack} \rightarrow \text{Server} \rightarrow \text{Workload}$, bao gồm việc liên kết thiết bị vật lý với mã QR/ArUco Marker.
+    \item \textbf{Giám sát và thu thập Telemetry:} Triển khai Monitoring Agent trên máy chủ để tự động thu thập các chỉ số phần cứng, OS, Docker stats và truyền về Backend qua WebSocket theo chu kỳ 5 giây/lần.
+    \item \textbf{Digital Twin:} Trực quan hóa mô hình cây tài sản kỹ thuật số, đồng bộ trạng thái sức khỏe (Healthy, Warning, Critical, Unavailable) và mối quan hệ giữa các thành phần.
+    \item \textbf{Quản lý Cảnh báo và Sự cố (Alert \& Incident):} Tự động phát hiện điều kiện vượt ngưỡng, khử trùng lặp cảnh báo (Alert Storm suppression), quản lý vòng đời cảnh báo và cho phép chuyển thành Incident.
+    \item \textbf{Quản lý Bảo trì (Ticket Management):} Khởi tạo phiếu bảo trì (Ticket), phân công kỹ thuật viên, theo dõi tiến độ và quy trình nghiệm thu đóng Ticket.
+    \item \textbf{Ứng dụng Thực tế Tăng cường (Mobile AR Application):} Cho phép kỹ thuật viên dùng thiết bị Android quét mã QR/ArUco trên phần cứng để hiển thị thông số telemetry, cảnh báo, log dịch vụ dạng lớp phủ AR (overlay) trực tiếp trên hình ảnh camera.
+    \item \textbf{Báo cáo và Thống kê:} Tổng hợp chỉ số hiệu năng (PUE), mức sử dụng tài nguyên, lịch sử sự cố và nhật ký kiểm toán (Audit Trail) không thể thay đổi.
+\end{enumerate}
+
+\section{Định nghĩa, thuật ngữ và từ viết tắt}
+\begin{longtable}{|p{3cm}|p{11.5cm}|}
+\hline
+\textbf{Thuật ngữ / Từ viết tắt} & \textbf{Định nghĩa / Giải thích} \\ \hline
+\endhead
+\textbf{AR} & Augmented Reality – Thực tế tăng cường, công nghệ bổ sung thông tin kỹ thuật số vào môi trường thực tế qua hình ảnh camera. \\ \hline
+\textbf{AR-IMMS} & Augmented Reality Integrated Infrastructure Monitoring and Maintenance System – Hệ thống Giám sát và Bảo trì Cơ sở Hạ tầng Tích hợp Thực tế Tăng cường. \\ \hline
+\textbf{Digital Twin} & Mô hình kỹ thuật số đại diện cho một đối tượng hoặc hệ thống vật lý, phản ánh trạng thái vận hành thời gian thực của đối tượng đó. \\ \hline
+\textbf{Data Center} & Trung tâm dữ liệu, môi trường tập trung các hệ thống máy chủ, thiết bị mạng, lưu trữ và các dịch vụ CNTT. \\ \hline
+\textbf{Mini Data Center Testbed} & Môi trường thử nghiệm mô phỏng trung tâm dữ liệu bằng cụm máy tính và thiết bị vật lý. \\ \hline
+\textbf{Telemetry} & Dữ liệu đo lường vận hành (CPU, RAM, Nhiệt độ, Disk, Network) được thu thập từ máy chủ. \\ \hline
+\textbf{Monitoring Agent} & Thành phần phần mềm thu thập dữ liệu chạy trên máy chủ để gửi chỉ số về Backend. \\ \hline
+\textbf{ArUco Marker} & Marker hình vuông mã hóa dữ liệu nhị phân, được sử dụng để nhận diện và xác định tọa độ đối tượng trong Computer Vision và AR. \\ \hline
+\textbf{Alert} & Cảnh báo được hệ thống tự động sinh ra khi thông số thu thập vượt ngưỡng cho phép hoặc mất kết nối. \\ \hline
+\textbf{Incident} & Sự cố vận hành được ghi nhận từ cảnh báo, yêu cầu phải phân công người xử lý. \\ \hline
+\textbf{Ticket} & Phiếu công việc dùng để theo dõi nhiệm vụ bảo trì hoặc sửa chữa sự cố tại hiện trường. \\ \hline
+\textbf{RBAC} & Role-Based Access Control – Cơ chế kiểm soát truy cập dựa trên vai trò người dùng. \\ \hline
+\textbf{JWT} & JSON Web Token – Chuẩn phương tiện đại diện cho các yêu cầu bảo mật giữa hai bên dưới dạng chuỗi JSON. \\ \hline
+\textbf{mTLS} & mutual Transport Layer Security – Thượng lượng TLS hai chiều để xác thực cả client (Agent) và server. \\ \hline
+\textbf{MTTR} & Mean Time to Resolution – Thời gian trung bình để giải quyết hoàn tất một sự cố. \\ \hline
+\textbf{PUE} & Power Usage Effectiveness – Chỉ số đánh giá hiệu quả sử dụng năng lượng của trung tâm dữ liệu. \\ \hline
+\end{longtable}
+
+\section{Tài liệu tham khảo}
+\begin{enumerate}[label={[\arabic*]}]
+    \item S. Gomes, A. N. Toosi, and B. Ens, “Digital Twin of a Cloud Data Centre: An OpenStack Cluster Visualisation,” in \textit{New Frontiers in Cloud Computing and Internet of Things}, Springer, 2022, pp. 209–225.
+    \item A. Buchner, G. Micheli, J. Gottwald, L. Rudolph, D. Pantförder, G. Klinker, and B. Vogel-Heuser, “Human-centered Augmented Reality Guidance for Industrial Maintenance with Digital Twins: A Use-Case Driven Pilot Study,” \textit{IEEE ISMAR-Adjunct}, 2022, pp. 74–76.
+    \item L. Eversberg, P. Ebrahimi, M. Pape, and J. Lambrecht, “A cognitive assistance system with augmented reality for manual repair tasks with high variability based on the digital twin,” \textit{Manufacturing Letters}, vol. 34, pp. 49–52, 2022.
+    \item Tiêu chuẩn IEEE 830-1998 / ISO/IEC/IEEE 29148:2018 cho tài liệu Đặc tả Yêu cầu Phần mềm (SRS).
+\end{enumerate}
+
+\section{Cấu trúc tài liệu}
+Tài liệu SRS này được tổ chức thành 9 chương chính như sau:
+\begin{itemize}
+    \item \textbf{Chương 1 – Giới thiệu:} Trình bày mục đích, phạm vi của hệ thống, các định nghĩa, thuật ngữ, từ viết tắt, tài liệu tham khảo và cấu trúc của tài liệu.
+    \item \textbf{Chương 2 – Mô tả tổng quan hệ thống:} Trình bày bối cảnh hệ thống, mục tiêu, đặc tả các bên liên quan (Actors), phạm vi chức năng, các giả định và ràng buộc thiết kế.
+    \item \textbf{Chương 3 – Quy trình nghiệp vụ:} Trình bày quy trình vận hành 5 giai đoạn khép kín và bảng ma trận phân công trách nhiệm (RACI Matrix).
+    \item \textbf{Chương 4 – Yêu cầu chức năng:} Đặc tả chi tiết các yêu cầu chức năng từ FR-01 đến FR-32 phân chia theo 10 phân hệ phần mềm.
+    \item \textbf{Chương 5 – Đặc tả Use Case:} Cung cấp danh sách 26 Use Case (UC-01 đến UC-26), sơ đồ Use Case và đặc tả chi tiết từng Use Case bao gồm điều kiện, luồng sự kiện chính, luồng thay thế và quy tắc nghiệp vụ.
+    \item \textbf{Chương 6 – Yêu cầu phi chức năng:} Đặc tả các yêu cầu về hiệu năng, độ sẵn sàng, bảo mật, độ tin cậy, khả năng mở rộng, tính dễ sử dụng, bảo trì và an toàn vận hành.
+    \item \textbf{Chương 7 – Quy tắc nghiệp vụ:} Trình bày danh mục các quy tắc nghiệp vụ (BR-01 đến BR-15) áp dụng trong toàn bộ hệ thống.
+    \item \textbf{Chương 8 – Thông báo và Xử lý lỗi:} Thống kê danh mục mã lỗi, thông báo thành công và các chiến lược xử lý sự cố truyền thông/kết nối.
+    \item \textbf{Chương 9 – Phụ lục:} Cung cấp từ điển Actor, danh mục Use Case tổng hợp và ma trận truy vết yêu cầu (Requirements Traceability Matrix).
+\end{itemize}
+
