@@ -4,7 +4,8 @@ AR-IMMS Backend API Application Entrypoint
 import os
 from flask import Flask, jsonify
 from core.config import FactoryConfig
-from core.cors import setup_cors
+from core.cors import init_cors
+from infrastructure.databases import init_db
 from api.middleware import register_middleware
 
 def create_app(config_name: str = None) -> Flask:
@@ -15,8 +16,9 @@ def create_app(config_name: str = None) -> Flask:
     config_cls = FactoryConfig.get_config(config_name)
     app.config.from_object(config_cls)
 
-    # Setup CORS & Middleware
-    setup_cors(app)
+    # Setup CORS, Database & Middleware
+    init_cors(app)
+    init_db(app)
     register_middleware(app)
 
     @app.route("/health", methods=["GET"])
