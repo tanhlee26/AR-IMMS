@@ -9,7 +9,6 @@ class Config:
     DEBUG = os.environ.get("DEBUG", "True").lower() in ["true", "1"]
     TESTING = os.environ.get("TESTING", "False").lower() in ["true", "1"]
     
-    # Database configuration (Supabase PostgreSQL / DATABASE_URI / SQLite fallback)
     DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default.db")
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("DATABASE_URI")
@@ -18,7 +17,6 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # AR-IMMS System Parameters
     TELEMETRY_DEFAULT_INTERVAL_SECONDS = int(os.environ.get("TELEMETRY_INTERVAL", 5))
     TELEMETRY_STALE_TIMEOUT_SECONDS = int(os.environ.get("STALE_TIMEOUT", 90))
     CORS_HEADERS = "Content-Type"
@@ -28,6 +26,8 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -35,8 +35,8 @@ class ProductionConfig(Config):
 class FactoryConfig:
     @staticmethod
     def get_config(env: str):
-        if env == "production":
-            return ProductionConfig
-        elif env == "testing":
+        if env == "testing":
             return TestingConfig
+        elif env == "production":
+            return ProductionConfig
         return DevelopmentConfig

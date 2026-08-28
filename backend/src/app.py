@@ -7,6 +7,7 @@ from core.config import FactoryConfig
 from core.cors import init_cors
 from infrastructure.databases import init_db
 from api.middleware import register_middleware
+from api.controllers.telemetry_controller import telemetry_bp
 
 def create_app(config_name: str = None) -> Flask:
     if config_name is None:
@@ -21,6 +22,9 @@ def create_app(config_name: str = None) -> Flask:
     init_db(app)
     register_middleware(app)
 
+    # Register Blueprints
+    app.register_blueprint(telemetry_bp)
+
     @app.route("/health", methods=["GET"])
     def health_check():
         return jsonify({
@@ -31,9 +35,7 @@ def create_app(config_name: str = None) -> Flask:
 
     return app
 
-app = create_app()
-
 if __name__ == "__main__":
+    app = create_app()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=app.config.get("DEBUG", True))
-
