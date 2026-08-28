@@ -1,36 +1,125 @@
+"""
+AR-IMMS Infrastructure Layer - User & Role Repository
+Handles database operations for Users, Roles (RBAC), and Notifications.
+"""
+import json
 from datetime import datetime
+from typing import Optional, List
+from werkzeug.security import generate_password_hash, check_password_hash
 from infrastructure.databases import db
+from infrastructure.models import UserModel, RoleModel, NotificationModel
 
-class RoleModel(db.Model):
-    __tablename__ = 'roles'
+class UserRepository:
+    def get_by_id(self, user_id: int) -> Optional[UserModel]:
+        return UserModel.query.get(user_id)
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    permissions_json = db.Column(db.Text, nullable=True)
-    description = db.Column(db.String(255), nullable=True)
+    def get_by_username(self, username: str) -> Optional[UserModel]:
+        return UserModel.query.filter_by(username=username).first()
 
-    users = db.relationship('UserModel', backref='role', lazy=True)
+    def get_by_email(self, email: str) -> Optional[UserModel]:
+        return UserModel.query.filter_by(email=email).first()
 
-class UserModel(db.Model):
-    __tablename__ = 'users'
+    def get_by_username_or_email(self, identifier: str) -> Optional[UserModel]:
+        return (
+            UserModel.query
+            .filter((UserModel.username == identifier) | (UserModel.email == identifier))
+            .first()
+        )
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    full_name = db.Column(db.String(100), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    def get_role_by_name(self, role_name: str) -> Optional[RoleModel]:
+        return RoleModel.query.filter_by(name=role_name).first()
 
-class NotificationModel(db.Model):
-    __tablename__ = 'notifications'
+    def get_role_by_id(self, role_id: int) -> Optional[RoleModel]:
+        return RoleModel.query.get(role_id)
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    title = db.Column(db.String(150), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-    type = db.Column(db.String(50), default='SYSTEM', nullable=False)
-    is_read = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    def create_role(self, name: str, description: str = "", permissions: List[str] = None) -> RoleModel:
+        role = self.get_role_by_name(name)
+        if not role:
+            perms_json = json.dumps(permissions or [])
+            role = RoleModel(name=name, description=description, permissions_json=perms_json)
+            db.session.add(role)
+            db.session.commit()
+        return role
+
+    def create_user(self, username: str, email: str, password_raw: str, full_name: str, role_id: int) -> UserModel:
+        password_hash = generate_password_hash(password_raw)
+        user = UserModel(
+            username=username,
+            email=email,
+            password_hash=password_hash,
+            full_name=full_name,
+            role_id=role_id,
+            is_active=True
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    def seed_default_roles_and_users(self):
+        """Seeds standard RBAC roles and default demo users if CSDL is empty."""
+        roles_spec = [
+            {
+                "name": "ADMINISTRATOR",
+                "description": "Quản trị viên toàn quyền hệ thống IMMS",
+                "permissions": ["all", "user:manage", "site:manage", "threshold:manage", "ticket:approve"]
+            },
+            {
+                "name": "SYSTEM_OPERATOR",
+                "description": "Vận hành viên trực ca Command Center",
+                "permissions": ["dashboard:view", "alert:ack", "ticket:create", "ticket:assign", "ticket:approve"]
+            },
+            {
+                "name": "FIELD_TECHNICIAN",
+                "description": "Kỹ thuật viên hiện trường thao tác AR Mobile",
+                "permissions": ["ar:scan", "ticket:view_assigned", "ticket:update", "ticket:request_closure"]
+            }
+        ]
+
+        roles_map = {}
+        for r_data in roles_spec:
+            role = self.create_role(
+                name=r_data["name"],
+                description=r_data["description"],
+                permissions=r_data["permissions"]
+            )
+            roles_map[r_data["name"]] = role.id
+
+        # Default Demo Users
+        default_users = [
+            {
+                "username": "admin",
+                "email": "admin@ar-imms.vn",
+                "password": "adminpassword2026",
+                "full_name": "Nguyen Van Admin",
+                "role_name": "ADMINISTRATOR"
+            },
+            {
+                "username": "operator",
+                "email": "operator@ar-imms.vn",
+                "password": "operatorpassword2026",
+                "full_name": "Tran Van Operator",
+                "role_name": "SYSTEM_OPERATOR"
+            },
+            {
+                "username": "technician",
+                "email": "tech@ar-imms.vn",
+                "password": "techpassword2026",
+                "full_name": "Le Van Technician",
+                "role_name": "FIELD_TECHNICIAN"
+            }
+        ]
+
+        created_users = []
+        for u_data in default_users:
+            if not self.get_by_username(u_data["username"]):
+                role_id = roles_map[u_data["role_name"]]
+                u = self.create_user(
+                    username=u_data["username"],
+                    email=u_data["email"],
+                    password_raw=u_data["password"],
+                    full_name=u_data["full_name"],
+                    role_id=role_id
+                )
+                created_users.append(u)
+
+        return created_users

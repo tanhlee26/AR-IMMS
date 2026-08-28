@@ -8,6 +8,7 @@ from core.cors import init_cors
 from infrastructure.databases import init_db
 from api.middleware import register_middleware
 from api.controllers.telemetry_controller import telemetry_bp
+from api.controllers.auth_controller import auth_bp
 
 def create_app(config_name: str = None) -> Flask:
     if config_name is None:
@@ -24,6 +25,7 @@ def create_app(config_name: str = None) -> Flask:
 
     # Register Blueprints
     app.register_blueprint(telemetry_bp)
+    app.register_blueprint(auth_bp)
 
     @app.route("/health", methods=["GET"])
     def health_check():
