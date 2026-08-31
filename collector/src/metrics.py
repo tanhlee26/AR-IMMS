@@ -1,6 +1,6 @@
 """
-AR-IMMS Collector Agent - System Metrics Collector Module
-Utilizes psutil and system APIs to gather hardware, OS, network, and container telemetry.
+AR-IMMS Collector Agent - Mô-đun Thu thập Chỉ số Hệ thống
+Sử dụng psutil và các API hệ thống để thu thập thông số phần cứng, hệ điều hành, mạng và Docker container.
 """
 import os
 import time
@@ -18,11 +18,12 @@ class SystemMetricsCollector:
         self.mac_address = self._get_mac_address()
         self.ip_address = self._get_ip_address()
 
-        # Previous network counters for rate calculation (Rx/Tx KB/s)
+        # Bộ đếm lưu lưu lượng mạng trước đó để tính tốc độ Rx/Tx (KB/s)
         self._last_net_io = psutil.net_io_counters()
         self._last_time = time.time()
 
     def _get_mac_address(self) -> str:
+        """Lấy địa chỉ MAC của card mạng mặc định."""
         try:
             mac_num = uuid.getnode()
             mac_str = ':'.join(('%012X' % mac_num)[i:i+2] for i in range(0, 12, 2))
@@ -31,8 +32,9 @@ class SystemMetricsCollector:
             return "00:00:00:00:00:00"
 
     def _get_ip_address(self) -> str:
+        """Lấy địa chỉ IP nội bộ chính của máy chủ."""
         try:
-            # Connect to dummy remote to determine primary outbound IP
+            # Tạo kết nối socket giả lập tới DNS Google để xác định IP đi ra mạng ngoài
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0.5)
             s.connect(("8.8.8.8", 80))
@@ -47,8 +49,8 @@ class SystemMetricsCollector:
 
     def get_cpu_temperature(self, current_cpu_usage: float) -> float:
         """
-        Retrieves CPU Temperature °C via psutil sensors.
-        Falls back to thermal estimation model if hardware sensor is unavailable.
+        Đọc nhiệt độ CPU (°C) qua cảm biến psutil.
+        Nếu phần cứng không hỗ trợ đọc trực tiếp, áp dụng mô hình ước tính nhiệt độ môi trường.
         """
         try:
             if hasattr(psutil, "sensors_temperatures"):
@@ -61,13 +63,13 @@ class SystemMetricsCollector:
         except Exception:
             pass
 
-        # Fallback Thermal Model for Mini Data Center Laptop Testbed:
-        # Base ambient temp 42.0°C + CPU load factor
+        # Mô hình mô phỏng nhiệt độ môi trường cho thử nghiệm 4 Laptop:
+        # Nhiệt độ nền 42.0°C + hệ số tải CPU
         estimated_temp = 42.0 + (current_cpu_usage * 0.42)
         return round(min(estimated_temp, 98.0), 1)
 
     def get_network_rates(self) -> Dict[str, float]:
-        """Calculates Rx and Tx network transfer rates in KB/s."""
+        """Tính toán tốc độ truyền (Tx) và nhận (Rx) dữ liệu mạng theo KB/s."""
         current_time = time.time()
         current_net_io = psutil.net_io_counters()
         time_delta = max(current_time - self._last_time, 0.1)
@@ -89,7 +91,7 @@ class SystemMetricsCollector:
         }
 
     def get_container_stats(self) -> List[Dict[str, Any]]:
-        """Collects Docker container runtime stats if Docker daemon is available."""
+        """Thu thập danh sách và trạng thái Docker Container nếu dịch vụ Docker đang chạy."""
         containers = []
         try:
             import docker
@@ -103,12 +105,12 @@ class SystemMetricsCollector:
                 }
                 containers.append(stats)
         except Exception:
-            # Docker SDK not installed or daemon not running (Graceful fallback)
+            # Fallback nếu máy không cài Docker hoặc Docker SDK chưa bật
             pass
         return containers
 
     def collect_all_telemetry(self, node_id: int = 1) -> Dict[str, Any]:
-        """Collects a complete telemetry snapshot for the node."""
+        """Thu thập toàn bộ ảnh chụp dữ liệu đo đạc (telemetry snapshot) cho nút máy chủ."""
         cpu_usage = psutil.cpu_percent(interval=0.5)
         cpu_per_core = psutil.cpu_percent(percpu=True)
         memory = psutil.virtual_memory()

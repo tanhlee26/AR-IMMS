@@ -1,7 +1,11 @@
+"""
+AR-IMMS Tầng Hạ tầng Model - Mô hình CSDL SQLAlchemy cho Nhật ký Kiểm toán Bất biến (Audit Log)
+"""
 from datetime import datetime
 from infrastructure.databases import db
 
 class AuditLogModel(db.Model):
+    """Bảng lưu trữ Nhật ký Kiểm toán Bất biến ghi lại toàn bộ thao tác tác động hệ thống."""
     __tablename__ = 'audit_logs'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

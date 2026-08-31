@@ -1,7 +1,12 @@
+"""
+AR-IMMS Tầng Hạ tầng Model - Mô hình CSDL SQLAlchemy cho Phân cấp Cấu trúc Digital Twin
+Bao gồm: Trung tâm dữ liệu (Site), Phòng máy (Room), Tủ Rack, Nút máy chủ (Node), Container, Mã AR Marker và Collector Agent.
+"""
 from datetime import datetime
 from infrastructure.databases import db
 
 class SiteModel(db.Model):
+    """Bảng lưu trữ Trung tâm Dữ liệu (Data Center Site)."""
     __tablename__ = 'sites'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -15,6 +20,7 @@ class SiteModel(db.Model):
     rooms = db.relationship('RoomModel', backref='site', cascade='all, delete-orphan', lazy=True)
 
 class RoomModel(db.Model):
+    """Bảng lưu trữ Phòng máy chủ thuộc Site."""
     __tablename__ = 'rooms'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -29,6 +35,7 @@ class RoomModel(db.Model):
     racks = db.relationship('RackModel', backref='room', cascade='all, delete-orphan', lazy=True)
 
 class RackModel(db.Model):
+    """Bảng lưu trữ Tủ Rack máy chủ thuộc Phòng máy (Room)."""
     __tablename__ = 'racks'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -43,6 +50,7 @@ class RackModel(db.Model):
     nodes = db.relationship('NodeModel', backref='rack', cascade='all, delete-orphan', lazy=True)
 
 class NodeModel(db.Model):
+    """Bảng lưu trữ Nút máy chủ Server thuộc tủ Rack (Laptop/Server node trong thử nghiệm)."""
     __tablename__ = 'nodes'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -63,6 +71,7 @@ class NodeModel(db.Model):
     agents = db.relationship('DataCollectorAgentModel', backref='node', cascade='all, delete-orphan', lazy=True)
 
 class ContainerModel(db.Model):
+    """Bảng lưu trữ Docker Container đang vận hành trên máy chủ (Node)."""
     __tablename__ = 'containers'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -78,6 +87,7 @@ class ContainerModel(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 class MarkerModel(db.Model):
+    """Bảng lưu trữ Mã định danh QR Code hoặc ArUco Marker phục vụ nhận diện không gian Mobile AR."""
     __tablename__ = 'markers'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -89,6 +99,7 @@ class MarkerModel(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 class DataCollectorAgentModel(db.Model):
+    """Bảng lưu trữ thông tin Daemon phần mềm Collector Agent cài đặt trên các máy chủ."""
     __tablename__ = 'data_collector_agents'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

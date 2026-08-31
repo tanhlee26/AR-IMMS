@@ -1,6 +1,6 @@
 """
-AR-IMMS API Layer - Authentication & RBAC Controller
-Endpoints for User Login, Registration, JWT Token Validation, and Seed Users.
+AR-IMMS Tầng API Controller - Bộ điều khiển Xác thực JWT & Phân quyền RBAC
+Các endpoint Đăng nhập, Đăng ký, Kiểm tra Token JWT và Khởi tạo dữ liệu người dùng mẫu.
 """
 from flask import Blueprint, request, g
 from core.container import container
@@ -13,7 +13,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 def login():
     """
     [POST] /api/v1/auth/login
-    Authenticates username/email & password, returning signed JWT Access Token and RBAC role.
+    Xác thực tên đăng nhập/email & mật khẩu, trả về JWT Access Token và vai trò phân quyền RBAC.
     """
     payload = request.get_json() or {}
     identifier = payload.get("username") or payload.get("email") or payload.get("identifier")
@@ -21,13 +21,13 @@ def login():
 
     auth_service = container.auth_service()
     result = auth_service.login(identifier, password)
-    return success_response(data=result, message="Authentication successful.")
+    return success_response(data=result, message="Đăng nhập xác thực thành công.")
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """
     [POST] /api/v1/auth/register
-    Registers a new user account with assigned RBAC role.
+    Đăng ký tài khoản người dùng mới với vai trò phân quyền chỉ định.
     """
     payload = request.get_json() or {}
     username = payload.get("username")
@@ -38,14 +38,14 @@ def register():
 
     auth_service = container.auth_service()
     result = auth_service.register_user(username, email, password, full_name, role_name)
-    return success_response(data=result, message="User registered successfully.", status_code=201)
+    return success_response(data=result, message="Đăng ký tài khoản người dùng thành công.", status_code=201)
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required
 def get_current_user_profile():
     """
     [GET] /api/v1/auth/me
-    Retrieves current authenticated user profile and RBAC permissions. Requires Bearer Token.
+    Trích xuất thông tin người dùng hiện tại và danh sách quyền hạn RBAC. Yêu cầu truyền Bearer Token.
     """
     user = g.current_user
     return success_response(
@@ -57,16 +57,15 @@ def get_current_user_profile():
             "role": user.role_name,
             "permissions": user.permissions
         },
-        message="User profile retrieved successfully."
+        message="Trích xuất thông tin người dùng thành công."
     )
 
 @auth_bp.route("/seed-users", methods=["POST"])
 def seed_users():
     """
     [POST] /api/v1/auth/seed-users
-    Populates default RBAC roles and demo accounts (Admin, Operator, Technician).
+    Khởi tạo danh sách các vai trò chuẩn (Admin, Operator, Technician) và tài khoản mẫu vào CSDL.
     """
     auth_service = container.auth_service()
     result = auth_service.seed_default_users()
-    return success_response(data=result, message="Default roles and users seeded successfully.")
-
+    return success_response(data=result, message="Khởi tạo danh sách vai trò và tài khoản mẫu thành công.")

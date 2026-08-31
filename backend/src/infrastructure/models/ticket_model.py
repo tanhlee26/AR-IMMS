@@ -1,7 +1,11 @@
+"""
+AR-IMMS Tầng Hạ tầng Model - Mô hình CSDL SQLAlchemy cho Phiếu Bảo trì Sự cố (Tickets, Notes, Closure Requests)
+"""
 from datetime import datetime
 from infrastructure.databases import db
 
 class TicketModel(db.Model):
+    """Bảng lưu trữ thông tin các Phiếu công việc Bảo trì Sự cố (Tickets)."""
     __tablename__ = 'tickets'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -20,6 +24,7 @@ class TicketModel(db.Model):
     closure_request = db.relationship('TicketClosureRequestModel', backref='ticket', uselist=False, cascade='all, delete-orphan', lazy=True)
 
 class TicketNoteModel(db.Model):
+    """Bảng lưu trữ Ghi chú diễn biến xử lý sự cố của Kỹ thuật viên."""
     __tablename__ = 'ticket_notes'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -29,6 +34,7 @@ class TicketNoteModel(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 class TicketClosureRequestModel(db.Model):
+    """Bảng lưu trữ Yêu cầu Nghiệm thu Đóng Ticket gửi Vận hành viên phê duyệt."""
     __tablename__ = 'ticket_closure_requests'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
