@@ -1,6 +1,6 @@
 """
-AR-IMMS Business Logic Layer - Telemetry Service
-Provides real-time telemetry extraction by Node ID or AR Marker Code, historical telemetry, and snapshot persistence.
+AR-IMMS Tầng Nghiệp vụ Service - Dịch vụ Telemetry Dữ liệu Đo đạc
+Trích xuất thông số thời gian thực theo Node ID, theo mã QR/ArUco Marker, tra cứu lịch sử đo đạc và tiếp nhận bản tin telemetry snapshot.
 """
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -17,26 +17,26 @@ class TelemetryService:
 
     def get_realtime_telemetry_by_node_id(self, node_id: int) -> Dict[str, Any]:
         """
-        Extracts comprehensive real-time telemetry data for a specified Node ID,
-        including hardware metrics, hierarchy context, active alerts, and container workloads.
+        Trích xuất toàn bộ dữ liệu đo đạc phần cứng thời gian thực cho máy chủ theo Node ID,
+        bao gồm chỉ số đo đạc, vị trí trong cây Digital Twin, các alert đang bật và danh sách container workload.
         """
         node = NodeModel.query.get(node_id)
         if not node:
-            raise EntityNotFoundError("Node", str(node_id))
+            raise EntityNotFoundError("Máy chủ Node", str(node_id))
 
-        # Resolve hierarchy names
+        # Tra cứu tên phân cấp cấu trúc hạ tầng
         rack = RackModel.query.get(node.rack_id) if node.rack_id else None
         room = RoomModel.query.get(rack.room_id) if rack and rack.room_id else None
         site = SiteModel.query.get(room.site_id) if room and room.site_id else None
 
-        rack_name = rack.name if rack else "Unassigned Rack"
-        room_name = room.name if room else "Unassigned Room"
-        site_name = site.name if site else "Unassigned Site"
+        rack_name = rack.name if rack else "Rack chưa phân công"
+        room_name = room.name if room else "Phòng chưa phân công"
+        site_name = site.name if site else "Trung tâm chưa phân công"
 
-        # Fetch latest metrics
+        # Trích xuất các chỉ số telemetry mới nhất
         latest_metrics = self.repository.get_latest_metrics_by_node(node_id)
 
-        # Fetch active alerts
+        # Trích xuất danh sách cảnh báo đang bật
         active_alerts = self.repository.get_active_alerts_by_node(node_id)
         alerts_list = [
             {
@@ -51,7 +51,7 @@ class TelemetryService:
             for alert in active_alerts
         ]
 
-        # Fetch container workloads
+        # Trích xuất danh sách Docker container đang chạy trên máy chủ
         containers = ContainerModel.query.filter_by(node_id=node_id).all()
         containers_list = [
             {
@@ -66,7 +66,7 @@ class TelemetryService:
             for c in containers
         ]
 
-        # Determine overall node health status
+        # Tính toán trạng thái sức khỏe tổng thể của máy chủ
         health_status = node.status
         if alerts_list:
             has_critical = any(a["severity"] == "CRITICAL" for a in alerts_list)
@@ -97,16 +97,16 @@ class TelemetryService:
 
     def get_realtime_telemetry_by_marker_code(self, marker_code: str) -> Dict[str, Any]:
         """
-        Extracts real-time telemetry data by scanning an AR QR Code or ArUco Marker code.
-        Designed for instant Mobile AR Client overlay rendering.
+        Trích xuất dữ liệu telemetry thời gian thực khi camera di động quét mã QR Code hoặc ArUco Marker.
+        Phục vụ hiển thị thẻ AR Overlay ảo đè lên ống kính hiện trường.
         """
         marker = MarkerModel.query.filter_by(marker_code=marker_code).first()
         if not marker:
-            raise EntityNotFoundError("AR Marker Code", marker_code)
+            raise EntityNotFoundError("Mã AR Marker", marker_code)
 
         telemetry_payload = self.get_realtime_telemetry_by_node_id(marker.node_id)
         
-        # Attach marker AR context metadata
+        # Đính kèm metadata tọa độ không gian 3D AR
         telemetry_payload["ar_marker"] = {
             "marker_id": marker.id,
             "marker_code": marker.marker_code,
@@ -116,26 +116,26 @@ class TelemetryService:
         return telemetry_payload
 
     def record_telemetry_snapshot(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Receives, validates, and stores a telemetry snapshot from a Collector Agent."""
+        """Tiếp nhận, kiểm tra dữ liệu và lưu bản tin telemetry snapshot từ Collector Agent."""
         node_id = payload.get("node_id")
         metrics = payload.get("metrics")
         
         if not node_id or not metrics:
-            raise ValidationFailedError("Invalid telemetry payload: 'node_id' and 'metrics' are required.")
+            raise ValidationFailedError("Bản tin telemetry không hợp lệ: 'node_id' và 'metrics' là bắt buộc.")
 
         node = NodeModel.query.get(node_id)
         if not node:
-            raise EntityNotFoundError("Node", str(node_id))
+            raise EntityNotFoundError("Máy chủ Node", str(node_id))
 
-        # Update node ping time
+        # Cập nhật thời gian nhận tín hiệu heartbeat
         node.last_ping_at = datetime.utcnow()
         if node.status == "UNAVAILABLE":
             node.status = "ONLINE"
 
-        # Save metrics
+        # Lưu dữ liệu chỉ số đo đạc vào CSDL
         saved_metrics = self.repository.save_snapshot_metrics(node_id, metrics)
 
-        # Process Docker containers if present in payload
+        # Xử lý danh sách Docker Container nếu có trong bản tin
         if "containers" in payload and isinstance(payload["containers"], list):
             for c_data in payload["containers"]:
                 c_id = c_data.get("container_id")
@@ -157,9 +157,17 @@ class TelemetryService:
             from infrastructure.databases import db
             db.session.commit()
 
+        # Phát truyền bản tin dữ liệu mới qua WebSocket Gateway tới Web Dashboard & Mobile AR
+        try:
+            from core.websocket import broadcast_telemetry_update
+            full_telemetry = self.get_realtime_telemetry_by_node_id(node_id)
+            broadcast_telemetry_update(full_telemetry)
+        except Exception:
+            # Dự phòng nếu dịch vụ WebSocket chưa sẵn sàng
+            pass
+
         return {
             "node_id": node_id,
             "saved_metrics_count": len(saved_metrics),
             "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         }
-

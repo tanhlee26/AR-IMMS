@@ -1,6 +1,6 @@
 """
-AR-IMMS Business Logic Layer - Authentication & RBAC Service
-Handles JWT token generation, decoding, user authentication, and RBAC role validation.
+AR-IMMS Tầng Nghiệp vụ Service - Dịch vụ Xác thực JWT & Phân quyền RBAC
+Phát hành và giải mã JWT Bearer Token, xác thực đăng nhập người dùng và kiểm tra vai trò RBAC.
 """
 import os
 import json
@@ -27,7 +27,7 @@ class AuthService:
         self.algorithm = "HS256"
 
     def generate_token(self, user_id: int, username: str, email: str, role_name: str) -> str:
-        """Generates a signed JWT Bearer Token valid for 24 hours."""
+        """Tạo mã xác thực JWT Bearer Token có hiệu lực 24 giờ."""
         expiration = datetime.now(timezone.utc) + timedelta(hours=24)
         payload = {
             "sub": str(user_id),
@@ -39,26 +39,26 @@ class AuthService:
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
     def decode_token(self, token: str) -> Dict[str, Any]:
-        """Decodes and validates JWT Bearer Token signature and expiration."""
+        """Giải mã và xác thực chữ ký cũng như thời hạn của JWT Bearer Token."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except jwt.ExpiredSignatureError:
-            raise UnauthorizedError("JWT Token has expired. Please log in again.")
+            raise UnauthorizedError("JWT Token đã quá hạn. Vui lòng đăng nhập lại.")
         except jwt.InvalidTokenError:
-            raise UnauthorizedError("Invalid or corrupted JWT Token.")
+            raise UnauthorizedError("JWT Token không hợp lệ hoặc bị hỏng.")
 
     def login(self, identifier: str, password_raw: str) -> Dict[str, Any]:
-        """Authenticates user login credentials and returns JWT Access Token."""
+        """Xác thực đăng nhập người dùng và phát hành JWT Access Token."""
         if not identifier or not password_raw:
-            raise ValidationFailedError("Username/Email and Password are required.")
+            raise ValidationFailedError("Tên đăng nhập/Email và Mật khẩu là bắt buộc.")
 
         user = self.repository.get_by_username_or_email(identifier)
         if not user or not user.is_active:
-            raise UnauthorizedError("Invalid username or password.")
+            raise UnauthorizedError("Tên đăng nhập hoặc mật khẩu không chính xác.")
 
         if not check_password_hash(user.password_hash, password_raw):
-            raise UnauthorizedError("Invalid username or password.")
+            raise UnauthorizedError("Tên đăng nhập hoặc mật khẩu không chính xác.")
 
         role = self.repository.get_role_by_id(user.role_id)
         role_name = role.name if role else "GUEST"
@@ -81,10 +81,10 @@ class AuthService:
         }
 
     def get_user_by_id(self, user_id: int) -> UserProfileDTO:
-        """Fetches user profile for middleware authorization context."""
+        """Trích xuất thông tin người dùng phục vụ phân quyền trong Middleware."""
         user = self.repository.get_by_id(user_id)
         if not user:
-            raise EntityNotFoundError("User", str(user_id))
+            raise EntityNotFoundError("Người dùng", str(user_id))
 
         role = self.repository.get_role_by_id(user.role_id)
         role_name = role.name if role else "GUEST"
@@ -100,16 +100,16 @@ class AuthService:
         )
 
     def register_user(self, username: str, email: str, password_raw: str, full_name: str, role_name: str = "FIELD_TECHNICIAN") -> Dict[str, Any]:
-        """Registers a new user account with assigned RBAC role."""
+        """Đăng ký tài khoản người dùng mới và gán vai trò RBAC."""
         if self.repository.get_by_username(username):
-            raise DuplicateEntityError("User", "username", username)
+            raise DuplicateEntityError("Người dùng", "tên đăng nhập", username)
 
         if self.repository.get_by_email(email):
-            raise DuplicateEntityError("User", "email", email)
+            raise DuplicateEntityError("Người dùng", "email", email)
 
         role = self.repository.get_role_by_name(role_name)
         if not role:
-            raise EntityNotFoundError("Role", role_name)
+            raise EntityNotFoundError("Vai trò", role_name)
 
         user = self.repository.create_user(username, email, password_raw, full_name, role.id)
         return {
@@ -121,10 +121,9 @@ class AuthService:
         }
 
     def seed_default_users(self) -> Dict[str, Any]:
-        """Seeds default roles and users into CSDL."""
+        """Khởi tạo danh sách vai trò chuẩn và tài khoản người dùng mẫu vào CSDL."""
         created_users = self.repository.seed_default_roles_and_users()
         return {
             "seeded_count": len(created_users),
             "users": [u.username for u in created_users]
         }
-

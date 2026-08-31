@@ -1,7 +1,11 @@
+"""
+AR-IMMS Tầng Hạ tầng Model - Mô hình CSDL SQLAlchemy cho Quản lý Tài sản Máy chủ & Thông tin Bảo hành
+"""
 from datetime import datetime
 from infrastructure.databases import db
 
 class WarrantyInfoModel(db.Model):
+    """Bảng lưu trữ Thông tin Bảo hành và Nhà cung cấp của Máy chủ Server."""
     __tablename__ = 'warranty_info'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -17,6 +21,7 @@ class WarrantyInfoModel(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 class AssetSpecModel(db.Model):
+    """Bảng lưu trữ Thông số Cấu hình Phần cứng Chi tiết của Máy chủ (Asset Specifications)."""
     __tablename__ = 'asset_specs'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -32,6 +37,7 @@ class AssetSpecModel(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 class MaintenanceHistoryModel(db.Model):
+    """Bảng lưu trữ Lịch sử Bảo trì / Sửa chữa Thiết bị."""
     __tablename__ = 'maintenance_histories'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

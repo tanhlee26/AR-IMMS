@@ -1,6 +1,6 @@
 """
-AR-IMMS Infrastructure Layer - Telemetry Repository
-Handles database persistence and queries for telemetry metrics, thresholds, and alerts.
+AR-IMMS Tầng Hạ tầng Repository - Kho lưu trữ Dữ liệu Telemetry & Alert
+Thực hiện các thao tác CSDL lưu trữ và truy vấn chỉ số đo đạc phần cứng, ngưỡng cảnh báo và các alert.
 """
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
@@ -12,6 +12,7 @@ from infrastructure.models import (
 
 class TelemetryRepository:
     def create_metric(self, node_id: int, metric_type: str, value: float, unit: str, timestamp: datetime = None) -> TelemetryMetricModel:
+        """Tạo mới một bản ghi chỉ số đo đạc telemetry."""
         if timestamp is None:
             timestamp = datetime.utcnow()
         metric = TelemetryMetricModel(
@@ -26,7 +27,7 @@ class TelemetryRepository:
         return metric
 
     def save_snapshot_metrics(self, node_id: int, metrics_data: Dict[str, Any], timestamp: datetime = None) -> List[TelemetryMetricModel]:
-        """Saves a complete snapshot of telemetry metrics for a node."""
+        """Lưu toàn bộ ảnh chụp (snapshot) các chỉ số telemetry của một máy chủ vào CSDL."""
         if timestamp is None:
             timestamp = datetime.utcnow()
 
@@ -59,7 +60,7 @@ class TelemetryRepository:
         return created_metrics
 
     def get_latest_metrics_by_node(self, node_id: int) -> Dict[str, Any]:
-        """Retrieves the most recent telemetry metrics for a specific node."""
+        """Trích xuất các chỉ số telemetry thời gian thực mới nhất của một máy chủ."""
         metric_types = [
             "cpu_usage_percent", "memory_usage_percent", "memory_used_gb",
             "disk_usage_percent", "temperature_celsius",
@@ -81,7 +82,7 @@ class TelemetryRepository:
                 if last_updated_at is None or record.timestamp > last_updated_at:
                     last_updated_at = record.timestamp
             else:
-                # Default fallback values if no metric recorded yet
+                # Dữ liệu mặc định dự phòng nếu chưa nhận được chỉ số đo đạc
                 defaults = {
                     "cpu_usage_percent": 0.0,
                     "memory_usage_percent": 0.0,
@@ -99,7 +100,7 @@ class TelemetryRepository:
         return latest_data
 
     def get_historical_metrics(self, node_id: int, metric_type: str, hours: int = 24) -> List[TelemetryMetricModel]:
-        """Queries time-series telemetry metrics for a node within the specified time window."""
+        """Truy vấn chuỗi lịch sử chỉ số telemetry trong khoảng thời gian chỉ định (tính theo giờ)."""
         start_time = datetime.utcnow() - timedelta(hours=hours)
         return (
             TelemetryMetricModel.query
@@ -113,7 +114,7 @@ class TelemetryRepository:
         )
 
     def get_active_alerts_by_node(self, node_id: int) -> List[AlertModel]:
-        """Retrieves active (OPEN or ACKNOWLEDGED) alerts for a node."""
+        """Trích xuất danh sách các cảnh báo đang bật (OPEN hoặc ACKNOWLEDGED) của máy chủ."""
         return (
             AlertModel.query
             .filter(
@@ -123,4 +124,3 @@ class TelemetryRepository:
             .order_by(AlertModel.triggered_at.desc())
             .all()
         )
-

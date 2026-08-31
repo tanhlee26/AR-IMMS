@@ -1,6 +1,6 @@
 """
-AR-IMMS Infrastructure Layer - User & Role Repository
-Handles database operations for Users, Roles (RBAC), and Notifications.
+AR-IMMS Tầng Hạ tầng Repository - Kho lưu trữ Người dùng & Vai trò RBAC
+Thực hiện các thao tác CSDL cho Người dùng, Vai trò (Role RBAC) và Thông báo (Notification).
 """
 import json
 from datetime import datetime
@@ -11,15 +11,19 @@ from infrastructure.models import UserModel, RoleModel, NotificationModel
 
 class UserRepository:
     def get_by_id(self, user_id: int) -> Optional[UserModel]:
+        """Tra cứu người dùng theo ID."""
         return UserModel.query.get(user_id)
 
     def get_by_username(self, username: str) -> Optional[UserModel]:
+        """Tra cứu người dùng theo tên đăng nhập."""
         return UserModel.query.filter_by(username=username).first()
 
     def get_by_email(self, email: str) -> Optional[UserModel]:
+        """Tra cứu người dùng theo email."""
         return UserModel.query.filter_by(email=email).first()
 
     def get_by_username_or_email(self, identifier: str) -> Optional[UserModel]:
+        """Tra cứu người dùng theo tên đăng nhập hoặc email."""
         return (
             UserModel.query
             .filter((UserModel.username == identifier) | (UserModel.email == identifier))
@@ -27,12 +31,15 @@ class UserRepository:
         )
 
     def get_role_by_name(self, role_name: str) -> Optional[RoleModel]:
+        """Tra cứu vai trò RBAC theo tên."""
         return RoleModel.query.filter_by(name=role_name).first()
 
     def get_role_by_id(self, role_id: int) -> Optional[RoleModel]:
+        """Tra cứu vai trò RBAC theo ID."""
         return RoleModel.query.get(role_id)
 
     def create_role(self, name: str, description: str = "", permissions: List[str] = None) -> RoleModel:
+        """Tạo mới một vai trò phân quyền RBAC."""
         role = self.get_role_by_name(name)
         if not role:
             perms_json = json.dumps(permissions or [])
@@ -42,6 +49,7 @@ class UserRepository:
         return role
 
     def create_user(self, username: str, email: str, password_raw: str, full_name: str, role_id: int) -> UserModel:
+        """Tạo mới tài khoản người dùng với mật khẩu mã hóa hash."""
         password_hash = generate_password_hash(password_raw)
         user = UserModel(
             username=username,
@@ -56,7 +64,7 @@ class UserRepository:
         return user
 
     def seed_default_roles_and_users(self):
-        """Seeds standard RBAC roles and default demo users if CSDL is empty."""
+        """Khởi tạo danh sách các vai trò RBAC chuẩn và tài khoản thử nghiệm mẫu."""
         roles_spec = [
             {
                 "name": "ADMINISTRATOR",
@@ -84,7 +92,7 @@ class UserRepository:
             )
             roles_map[r_data["name"]] = role.id
 
-        # Default Demo Users
+        # Danh sách người dùng thử nghiệm mặc định
         default_users = [
             {
                 "username": "admin",
