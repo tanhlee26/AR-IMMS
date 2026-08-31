@@ -40,3 +40,9 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+mobile/android/app/.cxx/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
