@@ -157,6 +157,14 @@ class TelemetryService:
             from infrastructure.databases import db
             db.session.commit()
 
+        # Đánh giá ngưỡng cảnh báo & thực thi thuật toán khử trùng bão Alert
+        try:
+            from core.container import container
+            alerting_service = container.alerting_service()
+            alerting_service.evaluate_telemetry_snapshot(node_id, metrics)
+        except Exception as e:
+            print(f"[Lỗi Alert Engine]: {e}")
+
         # Phát truyền bản tin dữ liệu mới qua WebSocket Gateway tới Web Dashboard & Mobile AR
         try:
             from core.websocket import broadcast_telemetry_update
