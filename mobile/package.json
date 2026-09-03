@@ -17,7 +17,8 @@
     "react-native-nitro-image": "^0.15.2",
     "react-native-nitro-modules": "^0.37.1",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-vision-camera": "^5.2.3"
+    "react-native-vision-camera": "^5.2.3",
+    "react-native-vision-camera-barcode-scanner": "^5.2.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
