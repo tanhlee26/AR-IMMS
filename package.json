@@ -4,5 +4,8 @@
     "@nestjs/typeorm": "^12.0.0",
     "pg": "^8.23.0",
     "typeorm": "^1.1.0"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^20.2.0"
   }
 }
