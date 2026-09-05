@@ -37,6 +37,20 @@ class TicketService:
             assigned_to_user_id=assigned_to_user_id
         )
 
+        # Ghi nhận Nhật ký kiểm toán tạo Ticket
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="TICKET_CREATE",
+                target_entity="TICKET",
+                target_id=str(ticket.id),
+                user_id=created_by_user_id,
+                details={"title": title, "priority": priority, "node_id": node_id, "alert_id": alert_id}
+            )
+        except Exception:
+            pass
+
         return self.get_ticket_details(ticket.id)
 
     def assign_ticket(self, ticket_id: int, assigned_to_user_id: int) -> Dict[str, Any]:
@@ -53,6 +67,20 @@ class TicketService:
             raise InvalidStateTransitionError(ticket.status, "IN_PROGRESS")
 
         self.repository.assign_ticket(ticket, assigned_to_user_id)
+
+        # Ghi nhận Nhật ký kiểm toán phân công Ticket
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="TICKET_ASSIGN",
+                target_entity="TICKET",
+                target_id=str(ticket.id),
+                details={"assigned_to_user_id": assigned_to_user_id, "assigned_username": assigned_user.username}
+            )
+        except Exception:
+            pass
+
         return self.get_ticket_details(ticket.id)
 
     def add_note(self, ticket_id: int, author_user_id: int, note_text: str) -> Dict[str, Any]:
@@ -92,6 +120,21 @@ class TicketService:
             raise ValidationFailedError("Tóm tắt kết quả và chi tiết khắc phục là bắt buộc.")
 
         self.repository.create_closure_request(ticket, requested_by_user_id, summary, resolution_details)
+
+        # Ghi nhận Nhật ký kiểm toán yêu cầu đóng Ticket
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="TICKET_REQUEST_CLOSURE",
+                target_entity="TICKET",
+                target_id=str(ticket.id),
+                user_id=requested_by_user_id,
+                details={"summary": summary}
+            )
+        except Exception:
+            pass
+
         return self.get_ticket_details(ticket.id)
 
     def approve_closure(self, ticket_id: int, reviewed_by_user_id: int) -> Dict[str, Any]:
@@ -107,6 +150,21 @@ class TicketService:
             raise InvalidStateTransitionError(ticket.status, "CLOSED")
 
         self.repository.approve_closure_request(ticket, reviewed_by_user_id)
+
+        # Ghi nhận Nhật ký kiểm toán phê duyệt đóng Ticket
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="TICKET_APPROVE_CLOSURE",
+                target_entity="TICKET",
+                target_id=str(ticket.id),
+                user_id=reviewed_by_user_id,
+                details={"final_status": "CLOSED", "alert_id": ticket.alert_id}
+            )
+        except Exception:
+            pass
+
         return self.get_ticket_details(ticket.id)
 
     def reject_closure(self, ticket_id: int, reviewed_by_user_id: int, rejection_reason: str) -> Dict[str, Any]:
@@ -122,6 +180,21 @@ class TicketService:
             raise ValidationFailedError("Lý do từ chối đóng Ticket là bắt buộc.")
 
         self.repository.reject_closure_request(ticket, reviewed_by_user_id, rejection_reason)
+
+        # Ghi nhận Nhật ký kiểm toán từ chối đóng Ticket
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="TICKET_REJECT_CLOSURE",
+                target_entity="TICKET",
+                target_id=str(ticket.id),
+                user_id=reviewed_by_user_id,
+                details={"rejection_reason": rejection_reason}
+            )
+        except Exception:
+            pass
+
         return self.get_ticket_details(ticket.id)
 
     def get_tickets(

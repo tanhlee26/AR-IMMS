@@ -66,6 +66,21 @@ class AuthService:
 
         token = self.generate_token(user.id, user.username, user.email, role_name)
 
+        # Ghi nhận Nhật ký kiểm toán đăng nhập
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="USER_LOGIN",
+                target_entity="USER",
+                target_id=str(user.id),
+                user_id=user.id,
+                username=user.username,
+                details={"role": role_name, "login_method": "PASSWORD"}
+            )
+        except Exception:
+            pass
+
         return {
             "access_token": token,
             "token_type": "Bearer",

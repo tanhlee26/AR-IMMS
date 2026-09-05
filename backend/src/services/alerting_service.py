@@ -134,6 +134,20 @@ class AlertingService:
         self.repository.acknowledge_alert(alert, user_id)
         self._broadcast_alert_to_websocket(alert, event_type="alert_acknowledged")
 
+        # Ghi nhận Nhật ký kiểm toán xác nhận Alert
+        try:
+            from core.container import container
+            audit_service = container.audit_service()
+            audit_service.record_log(
+                action="ALERT_ACKNOWLEDGE",
+                target_entity="ALERT",
+                target_id=str(alert.id),
+                user_id=user_id,
+                details={"alert_type": alert.alert_type, "severity": alert.severity, "node_id": alert.node_id}
+            )
+        except Exception:
+            pass
+
         return {
             "id": alert.id,
             "status": alert.status,
