@@ -1,6 +1,7 @@
 # Environment & Secrets
 .env
 .env.local
+.env.*.local
 *.env
 .agents
 
@@ -12,6 +13,19 @@ __pycache__/
 env/
 venv/
 ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Databases & Local SQLite Storage
+*.db
+*.sqlite
+*.sqlite3
+default.db
+test.db
+instance/
+backend/src/instance/
 
 # LaTeX Build Artifacts
 docs/SRS/*.aux
@@ -27,22 +41,41 @@ docs/SRS/*.synctex.gz
 *.lot
 *.out
 *.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 
-# Node.js & Web Dependencies
+# Node.js, Frontend & Mobile Dependencies
 node_modules/
+frontend/node_modules/
+mobile/node_modules/
 .next/
 out/
 build/
 dist/
+.expo/
+mobile/.expo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Android & iOS Mobile Build Artifacts
+mobile/android/app/.cxx/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/ios/Pods/
+mobile/ios/build/
+
+# Temp Files & Office Auto-saves
+~$*.docx
+~$*.xlsx
+~$*.pptx
 
 # IDE & OS Artifacts
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-mobile/android/app/.cxx/
-mobile/android/app/build/
-mobile/android/build/
-mobile/android/.gradle/
-mobile/android/local.properties

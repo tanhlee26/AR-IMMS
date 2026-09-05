@@ -10,6 +10,8 @@ from infrastructure.databases import init_db
 from api.middleware import register_middleware
 from api.controllers.telemetry_controller import telemetry_bp
 from api.controllers.auth_controller import auth_bp
+from api.controllers.alert_controller import alert_bp
+from api.controllers.ticket_controller import ticket_bp
 
 def create_app(config_name: str = None) -> Flask:
     """Hàm Factory khởi tạo ứng dụng Flask với cấu hình môi trường."""
@@ -29,6 +31,8 @@ def create_app(config_name: str = None) -> Flask:
     # Đăng ký các Blueprint Controllers
     app.register_blueprint(telemetry_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(alert_bp)
+    app.register_blueprint(ticket_bp)
 
     @app.route("/health", methods=["GET"])
     def health_check():
