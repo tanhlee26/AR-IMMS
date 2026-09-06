@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from domain.exceptions import EntityNotFoundError, ValidationFailedError, InvalidStateTransitionError
 from infrastructure.models import NodeModel, UserModel
 from infrastructure.repositories.ticket_repository import TicketRepository
-
+from datetime import datetime
 class TicketService:
     def __init__(self):
         self.repository = TicketRepository()
