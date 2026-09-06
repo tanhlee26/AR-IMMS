@@ -39,3 +39,4 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+backend/src/core/*.db
