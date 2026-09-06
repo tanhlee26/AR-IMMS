@@ -213,6 +213,21 @@ class TicketService:
             raise EntityNotFoundError("Ticket", str(ticket_id))
         return self._format_ticket_dto(ticket)
 
+    def update_ticket_status(self, ticket_id: int, new_status: str) -> Dict[str, Any]:
+        """Cập nhật nhanh trạng thái ticket từ giao diện Kanban."""
+        ticket = self.repository.get_ticket_by_id(ticket_id)
+        if not ticket:
+            raise EntityNotFoundError("Ticket", str(ticket_id))
+        
+        valid_statuses = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]
+        if new_status in valid_statuses:
+            ticket.status = new_status
+            ticket.updated_at = datetime.utcnow()
+            from infrastructure.databases import db
+            db.session.commit()
+
+        return self.get_ticket_details(ticket.id)
+
     def _format_ticket_dto(self, ticket) -> Dict[str, Any]:
         """Hàm định dạng DTO cho Ticket."""
         node = NodeModel.query.get(ticket.node_id) if ticket.node_id else None
@@ -243,8 +258,10 @@ class TicketService:
 
         return {
             "id": ticket.id,
+            "code": f"TCK-{ticket.id:04d}",
             "node_id": ticket.node_id,
             "node_name": node.name if node else "N/A",
+            "node": node.name if node else "N/A",
             "alert_id": ticket.alert_id,
             "title": ticket.title,
             "description": ticket.description,
@@ -252,6 +269,7 @@ class TicketService:
             "status": ticket.status,
             "created_by": created_user.full_name if created_user else "Hệ thống",
             "assigned_to": assigned_user.full_name if assigned_user else "Chưa phân công",
+            "assignee": assigned_user.full_name if assigned_user else "Chưa phân công",
             "assigned_to_user_id": ticket.assigned_to_user_id,
             "created_at": ticket.created_at.strftime("%Y-%m-%dT%H:%M:%SZ") if ticket.created_at else None,
             "updated_at": ticket.updated_at.strftime("%Y-%m-%dT%H:%M:%SZ") if ticket.updated_at else None,

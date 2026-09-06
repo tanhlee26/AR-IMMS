@@ -43,3 +43,15 @@ def get_dashboard_summary():
     data = reporting_service.get_dashboard_summary()
     return success_response(data=data, message="Trích xuất tổng quan Dashboard KPI thành công.")
 
+dashboard_bp = Blueprint("dashboard_api", __name__, url_prefix="/api/v1")
+
+@dashboard_bp.route("/dashboard", methods=["GET"])
+def get_dashboard_data():
+    """
+    [GET] /api/v1/dashboard
+    Endpoint tổng hợp dữ liệu thời gian thực (nodes, summary, alerts) cho Web Command Center Next.js.
+    """
+    reporting_service = container.reporting_service()
+    data = reporting_service.get_dashboard_composite()
+    return success_response(data=data, message="Trích xuất dữ liệu tổng hợp Dashboard thành công.")
+
