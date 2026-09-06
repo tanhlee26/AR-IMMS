@@ -4,8 +4,10 @@ AR-IMMS Backend API Application Entrypoint
 import os
 from flask import Flask, jsonify
 from core.config import FactoryConfig
-from core.cors import setup_cors
+from core.cors import init_cors
 from api.middleware import register_middleware
+from infrastructure.databases import init_db
+from api.controllers.command_controller import command_api
 
 def create_app(config_name: str = None) -> Flask:
     if config_name is None:
@@ -16,8 +18,15 @@ def create_app(config_name: str = None) -> Flask:
     app.config.from_object(config_cls)
 
     # Setup CORS & Middleware
-    setup_cors(app)
+    init_cors(app)
     register_middleware(app)
+    init_db(app)
+    app.register_blueprint(command_api)
+
+    if app.config.get("DEBUG") or app.config.get("TESTING"):
+        from core.seed import seed_demo_data
+        with app.app_context():
+            seed_demo_data()
 
     @app.route("/health", methods=["GET"])
     def health_check():
