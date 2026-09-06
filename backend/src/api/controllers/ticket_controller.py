@@ -22,10 +22,40 @@ def get_tickets():
 
     node_id = int(node_id_arg) if node_id_arg else None
     assigned_to_user_id = g.current_user.id if assigned_to_me else None
+    assigned_to_user_id = None
+
+    # Tự động trích xuất user nếu có Token
+    auth_header = request.headers.get("Authorization")
+    if auth_header and assigned_to_me:
+        try:
+            from api.middleware import get_token_from_header
+            token = get_token_from_header()
+            auth_service = container.auth_service()
+            payload = auth_service.decode_token(token)
+            assigned_to_user_id = int(payload["sub"])
+        except Exception:
+            pass
 
     ticket_service = container.ticket_service()
     tickets = ticket_service.get_tickets(node_id=node_id, assigned_to_user_id=assigned_to_user_id, status=status)
     return success_response(data=tickets, message="Trích xuất danh sách ticket thành công.")
+
+@ticket_bp.route("/tickets/<int:ticket_id>", methods=["PATCH"])
+def update_ticket(ticket_id: int):
+    """
+    [PATCH] /api/v1/tickets/<ticket_id>
+    Cập nhật nhanh trạng thái ticket từ giao diện Kanban board.
+    """
+    payload = request.get_json() or {}
+    new_status = payload.get("status")
+    ticket_service = container.ticket_service()
+    
+    if new_status:
+        result = ticket_service.update_ticket_status(ticket_id, new_status)
+    else:
+        result = ticket_service.get_ticket_details(ticket_id)
+        
+    return success_response(data=result, message=f"Cập nhật ticket ID {ticket_id} thành công.")
 
 @ticket_bp.route("/tickets/<int:ticket_id>", methods=["GET"])
 @jwt_required

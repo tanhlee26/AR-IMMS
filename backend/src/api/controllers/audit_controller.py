@@ -37,6 +37,22 @@ def get_audit_logs():
     )
     return success_response(data=data, message="Trích xuất nhật ký kiểm toán thành công.")
 
+    # Đảm bảo tương thích với frontend gọi dạng mảng hoặc đối tượng
+    formatted_logs = []
+    for l in data["logs"]:
+        formatted_logs.append({
+            "id": l["id"],
+            "timestamp": l["timestamp"],
+            "username": l["username"],
+            "action": l["action"],
+            "entity": l["target_entity"],
+            "targetId": l["target_id"],
+            "ip": l["ip_address"],
+            "details": l["details"]
+        })
+
+    return success_response(data=formatted_logs, message="Trích xuất nhật ký kiểm toán thành công.")
+
 @audit_bp.route("", methods=["POST"])
 @jwt_required
 def create_audit_log():

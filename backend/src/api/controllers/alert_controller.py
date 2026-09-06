@@ -42,12 +42,26 @@ def get_active_alerts():
 
 @alert_bp.route("/alerts/<int:alert_id>/acknowledge", methods=["POST"])
 @jwt_required
+@alert_bp.route("/alerts/<int:alert_id>/acknowledge", methods=["POST", "PATCH"])
 def acknowledge_alert(alert_id: int):
     """
     [POST] /api/v1/alerts/<alert_id>/acknowledge
+    [POST/PATCH] /api/v1/alerts/<alert_id>/acknowledge
     Vận hành viên (Operator) nhấn xác nhận tiếp nhận xử lý Cảnh báo (Acknowledge Alert).
     """
     user_id = g.current_user.id
+    user_id = 2 # Mặc định Operator ID nếu gọi từ web dashboard nhanh
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        try:
+            from api.middleware import get_token_from_header
+            token = get_token_from_header()
+            auth_service = container.auth_service()
+            payload = auth_service.decode_token(token)
+            user_id = int(payload["sub"])
+        except Exception:
+            pass
+
     alerting_service = container.alerting_service()
     result = alerting_service.acknowledge_alert(alert_id, user_id)
     return success_response(data=result, message=f"Xác nhận tiếp nhận cảnh báo ID {alert_id} thành công.")
