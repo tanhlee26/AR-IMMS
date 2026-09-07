@@ -1,11 +1,10 @@
 """
-AR-IMMS Tầng Hạ tầng Model - Mô hình CSDL SQLAlchemy cho Người dùng & Vai trò RBAC
+AR-IMMS Infrastructure Layer - User & RBAC SQLAlchemy Models
 """
 from datetime import datetime
 from infrastructure.databases import db
 
 class RoleModel(db.Model):
-    """Bảng lưu trữ thông tin các Vai trò Phân quyền RBAC (ADMINISTRATOR, SYSTEM_OPERATOR, FIELD_TECHNICIAN)."""
     __tablename__ = 'roles'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -16,7 +15,6 @@ class RoleModel(db.Model):
     users = db.relationship('UserModel', backref='role', lazy=True)
 
 class UserModel(db.Model):
-    """Bảng lưu trữ thông tin Tài khoản Người dùng hệ thống."""
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -34,7 +32,6 @@ class UserModel(db.Model):
     assigned_tickets = db.relationship('TicketModel', foreign_keys='TicketModel.assigned_to_user_id', backref='assigned_to_user', lazy=True)
 
 class NotificationModel(db.Model):
-    """Bảng lưu trữ các Thông báo gửi tới Người dùng."""
     __tablename__ = 'notifications'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -44,3 +41,4 @@ class NotificationModel(db.Model):
     type = db.Column(db.String(50), default='SYSTEM', nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
