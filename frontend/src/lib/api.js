@@ -14,7 +14,8 @@ async function request(path, options = {}) {
 export const api = {
   dashboard: () => request("/dashboard"),
   hierarchy: () => request("/hierarchy"),
-  telemetry: (nodeId, minutes = 15) => request(`/nodes/${nodeId}/telemetry?minutes=${minutes}`),
+  telemetry: (nodeId, minutes = 15) => request(`/nodes/${nodeId}/telemetry/realtime`),
+  telemetryHistory: (nodeId, metric, hours = 1) => request(`/nodes/${nodeId}/telemetry/history?metric_type=${metric}&hours=${hours}`),
   alerts: () => request("/alerts"),
   acknowledge: (id) => request(`/alerts/${id}/acknowledge`, { method: "PATCH" }),
   tickets: () => request("/tickets"),
