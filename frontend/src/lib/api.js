@@ -21,6 +21,9 @@ export const api = {
   tickets: () => request("/tickets"),
   createTicket: (data) => request("/tickets", { method: "POST", body: JSON.stringify(data) }),
   updateTicket: (id, data) => request(`/tickets/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  requestClosure: (id, data) => request(`/tickets/${id}/request-closure`, { method: "POST", body: JSON.stringify(data) }),
+  approveClosure: (id) => request(`/tickets/${id}/approve-closure`, { method: "POST" }),
+  rejectClosure: (id, data) => request(`/tickets/${id}/reject-closure`, { method: "POST", body: JSON.stringify(data) }),
   pue: () => request("/reports/pue"),
   auditLogs: () => request("/audit-logs"),
 };

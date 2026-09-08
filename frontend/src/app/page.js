@@ -217,8 +217,12 @@ function TelemetryView({ nodes, selected, setSelected, history }) {
   );
 }
 
-function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket }) {
+function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket, requestClosure, approveClosure, rejectClosure }) {
   const [alertFilter, setAlertFilter] = useState("ALL");
+  const [closureTicket, setClosureTicket] = useState(null);
+  const [closureSummary, setClosureSummary] = useState("");
+  const [resolutionDetails, setResolutionDetails] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
 
   if (active === "Digital Twin") return <section className="detail-layout"><div className="card detail-tree"><div className="card-title"><div><h2>Cây hạ tầng</h2><span>Site → Room → Rack → Node</span></div></div><Tree selected={selected} setSelected={setSelected} nodes={nodes}/></div><div className="node-grid">{nodes.map(n => <button key={n.id} className={`node-card card ${selected.id === n.id ? "chosen" : ""}`} onClick={() => setSelected(n)}><div className={`server-symbol ${n.status}`}><Server/></div><div><b>{n.name}</b><span>{n.ip} · {n.rack}</span></div><i className={`status-dot ${n.status}`}/><dl><div><dt>CPU</dt><dd>{n.cpu}%</dd></div><div><dt>RAM</dt><dd>{n.ram}%</dd></div><div><dt>Nhiệt độ</dt><dd>{n.temp}°C</dd></div><div><dt>Công suất</dt><dd>{n.power}W</dd></div></dl></button>)}</div></section>;
 
@@ -229,7 +233,7 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
     return <section className="card full-panel"><div className="card-title"><div><h2>Quản lý cảnh báo</h2><span>{visibleAlerts.filter(a => a.state === "Chưa xử lý").length} cảnh báo cần xác nhận</span></div><div className="filter-pills"><button className={alertFilter === "ALL" ? "selected" : ""} onClick={() => setAlertFilter("ALL")}>Tất cả</button><button className={alertFilter === "CRITICAL" ? "selected" : ""} onClick={() => setAlertFilter("CRITICAL")}>Critical</button><button className={alertFilter === "WARNING" ? "selected" : ""} onClick={() => setAlertFilter("WARNING")}>Warning</button></div></div><AlertTable alerts={visibleAlerts} acknowledge={acknowledge} createFromAlert={createFromAlert} full/></section>;
   }
 
-  if (active === "Tickets") return <section className="tickets-board">{["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map(status => <div className="ticket-column" key={status}><div className="column-head"><b>{{OPEN:"Mới",IN_PROGRESS:"Đang xử lý",RESOLVED:"Chờ duyệt",CLOSED:"Đã đóng"}[status]}</b><span>{tickets.filter(t => t.status === status).length}</span></div>{tickets.filter(t => t.status === status).map(t => <article className="ticket-card card" key={t.id}><div><span className={`priority ${t.priority.toLowerCase()}`}>{t.priority}</span><small>{t.code}</small></div><h3>{t.title}</h3><p>{t.description}</p><div className="ticket-meta"><Server/>{t.node}</div><div className="ticket-meta"><UserRound/>{t.assignee}</div><select value={t.status} onChange={e => updateTicket(t.id, {status:e.target.value})}><option value="OPEN">Mới</option><option value="IN_PROGRESS">Đang xử lý</option><option value="RESOLVED">Chờ duyệt</option><option value="CLOSED">Đã đóng</option></select></article>)}</div>)}</section>;
+  if (active === "Tickets") return <section className="tickets-board">{["OPEN", "IN_PROGRESS", "PENDING_CLOSURE", "CLOSED"].map(status => <div className="ticket-column" key={status}><div className="column-head"><b>{{OPEN:"Mới",IN_PROGRESS:"Đang xử lý",PENDING_CLOSURE:"Chờ duyệt đóng",CLOSED:"Đã đóng"}[status]}</b><span>{tickets.filter(t => t.status === status).length}</span></div>{tickets.filter(t => t.status === status).map(t => <article className="ticket-card card" key={t.id}><div><span className={`priority ${t.priority.toLowerCase()}`}>{t.priority}</span><small>{t.code}</small></div><h3>{t.title}</h3><p>{t.description}</p><div className="ticket-meta"><Server/>{t.node}</div><div className="ticket-meta"><UserRound/>{t.assignee}</div><select value={t.status} onChange={e => updateTicket(t.id, {status:e.target.value})}><option value="OPEN">Mới</option><option value="IN_PROGRESS">Đang xử lý</option><option value="PENDING_CLOSURE">Chờ duyệt đóng</option><option value="CLOSED">Đã đóng</option></select>{t.status === "IN_PROGRESS" && <button className="ack" onClick={() => { setClosureTicket(t); setClosureSummary(""); setResolutionDetails(""); }}>Yêu cầu đóng</button>}{t.status === "PENDING_CLOSURE" && <div className="row-actions"><button className="ack" onClick={() => approveClosure(t.id)}>Phê duyệt đóng</button><button className="ack" onClick={() => { setClosureTicket(t); setRejectionReason(""); }}>Từ chối</button></div>}{closureTicket?.id === t.id && <div className="closure-panel">{t.status === "IN_PROGRESS" ? <><textarea value={closureSummary} onChange={e => setClosureSummary(e.target.value)} placeholder="Tóm tắt kết quả xử lý"/><textarea value={resolutionDetails} onChange={e => setResolutionDetails(e.target.value)} placeholder="Chi tiết nghiệm thu"/><button className="primary" disabled={!closureSummary.trim() || !resolutionDetails.trim()} onClick={async () => { await requestClosure(t.id, {summary: closureSummary, resolution_details: resolutionDetails}); setClosureTicket(null); }}>Gửi yêu cầu</button></> : <><textarea value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} placeholder="Lý do từ chối yêu cầu đóng"/><button className="primary" disabled={!rejectionReason.trim()} onClick={async () => { await rejectClosure(t.id, {rejection_reason: rejectionReason}); setClosureTicket(null); }}>Gửi từ chối</button></>}</div>}</article>)}</div>)}</section>;
 
   if (active === "Báo cáo PUE") return <section className="report-grid"><div className="card report-main"><div className="card-title"><div><h2>Chỉ số PUE trong ngày</h2><span>Mục tiêu vận hành ≤ {report?.target || 1.5}</span></div></div><div className="report-chart"><div className="report-bars">{(report?.points || []).map((p,i) => <div key={p.hour} title={`${p.hour}: ${p.pue}`}><i style={{height:`${Math.max(20,(p.pue-1)*135)}px`}}/><span>{i%2===0?p.hour:""}</span></div>)}</div></div></div><div className="card report-summary"><div className="gauge"><svg viewBox="0 0 200 115"><path d="M25 100 A75 75 0 0 1 175 100"/><path className="gauge-fill" d="M25 100 A75 75 0 0 1 175 100"/></svg><div><strong>{report?.current || 1.42}</strong><span>Tốt</span></div></div><div className="report-kpis"><div><span>PUE trung bình</span><b>{report?.average || 1.41}</b></div><div><span>Tổng điện năng</span><b>{report?.summary?.totalEnergyKwh || 297.6} kWh</b></div><div><span>Thiết bị IT</span><b>{report?.summary?.itEnergyKwh || 209.6} kWh</b></div><div><span>Làm mát</span><b>{report?.summary?.coolingEnergyKwh || 88} kWh</b></div></div></div></section>;
 
@@ -282,6 +286,18 @@ export default function Dashboard() {
     try { const item = await api.updateTicket(id, changes); setTickets(t => t.map(x => x.id === id ? item : x)); setToast(`Đã cập nhật ${item.code}`); }
     catch { setToast("Không thể cập nhật ticket"); }
   };
+  const requestClosure = async (id, data) => {
+    try { const item = await api.requestClosure(id, data); setTickets(t => t.map(x => x.id === id ? item : x)); setToast("Đã gửi yêu cầu đóng ticket"); }
+    catch { setToast("Không thể gửi yêu cầu đóng ticket"); }
+  };
+  const approveClosure = async id => {
+    try { const item = await api.approveClosure(id); setTickets(t => t.map(x => x.id === id ? item : x)); setToast("Đã phê duyệt đóng ticket"); }
+    catch { setToast("Không thể phê duyệt đóng ticket"); }
+  };
+  const rejectClosure = async (id, data) => {
+    try { const item = await api.rejectClosure(id, data); setTickets(t => t.map(x => x.id === id ? item : x)); setToast("Đã từ chối yêu cầu đóng ticket"); }
+    catch { setToast("Không thể từ chối yêu cầu đóng ticket"); }
+  };
 
   return <div className="app-shell">
     <aside className={menuOpen ? "open" : ""}>
@@ -295,7 +311,7 @@ export default function Dashboard() {
       <div className="content">
         <div className="page-head"><div><p>COMMAND CENTER / {active.toUpperCase()}</p><h1>{active === "Tổng quan" ? "Tổng quan vận hành" : active}</h1><span>Cập nhật tự động mỗi 5 giây · {summary.totalNodes || nodes.length} nodes đang giám sát</span></div><div className="page-actions"><button onClick={() => window.print()}><FileText/>Xuất báo cáo</button><button className="primary" onClick={() => loadData()}><Activity/>Đồng bộ ngay</button></div></div>
 
-        {active !== "Tổng quan" ? <WorkspaceView active={active} nodes={nodes} selected={selected} setSelected={setSelected} alerts={alerts} tickets={tickets} report={report} auditLogs={auditLogs} history={history} acknowledge={acknowledge} createFromAlert={createFromAlert} updateTicket={updateTicket}/> : <>
+        {active !== "Tổng quan" ? <WorkspaceView active={active} nodes={nodes} selected={selected} setSelected={setSelected} alerts={alerts} tickets={tickets} report={report} auditLogs={auditLogs} history={history} acknowledge={acknowledge} createFromAlert={createFromAlert} updateTicket={updateTicket} requestClosure={requestClosure} approveClosure={approveClosure} rejectClosure={rejectClosure}/> : <>
 
         <section className="metrics-grid">
           <Metric icon={Server} label="Nodes hoạt động" value={`${summary.activeNodes}/${summary.totalNodes}`} unit="" tone="purple" values={[56,61,58,72,75,74,78,76]}/>
