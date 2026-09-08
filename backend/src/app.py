@@ -15,6 +15,7 @@ from api.controllers.ticket_controller import ticket_bp
 from api.controllers.reporting_controller import reporting_bp
 from api.controllers.reporting_controller import reporting_bp, dashboard_bp
 from api.controllers.audit_controller import audit_bp
+from api.controllers.hierarchy_controller import hierarchy_bp
 
 def create_app(config_name: str = None) -> Flask:
     """Hàm Factory khởi tạo ứng dụng Flask với cấu hình môi trường."""
@@ -39,6 +40,7 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(reporting_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(audit_bp)
+    app.register_blueprint(hierarchy_bp)
 
     @app.route("/health", methods=["GET"])
     def health_check():
