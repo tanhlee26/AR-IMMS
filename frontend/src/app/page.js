@@ -65,19 +65,61 @@ function Metric({ icon: Icon, label, value, unit, tone, values }) {
   );
 }
 
-function Tree({ selected, setSelected, nodes }) {
-  const [open, setOpen] = useState({ site: true, room: true, "Rack A01": true, "Rack A02": true });
+function Tree({ selected, setSelected, nodes, hierarchyTree }) {
+  const [open, setOpen] = useState({});
   const toggle = (key) => setOpen((s) => ({ ...s, [key]: !s[key] }));
-  const Arrow = ({ id }) => open[id] ? <ChevronDown /> : <ChevronRight />;
+  const isOpen = (key, defaultVal = true) => key in open ? open[key] : defaultVal;
+  const Arrow = ({ id, def }) => isOpen(id, def) ? <ChevronDown /> : <ChevronRight />;
+
+  // Nếu có dữ liệu hierarchy thật từ backend → render từ API
+  if (hierarchyTree && hierarchyTree.length > 0) {
+    return (
+      <div className="tree">
+        {hierarchyTree.map((site) => (
+          <div key={`site-${site.id}`}>
+            <button className="tree-row level-0 tree-toggle" onClick={() => toggle(`site-${site.id}`)}>
+              <Arrow id={`site-${site.id}`} def={true} /><Database /><span>{site.name}</span><b className="ok-dot" />
+            </button>
+            {isOpen(`site-${site.id}`) && site.rooms?.map((room) => (
+              <div key={`room-${room.id}`}>
+                <button className="tree-row level-1 tree-toggle" onClick={() => toggle(`room-${room.id}`)}>
+                  <Arrow id={`room-${room.id}`} def={true} /><Box /><span>{room.name}</span>
+                </button>
+                {isOpen(`room-${room.id}`) && room.racks?.map((rack) => (
+                  <div key={`rack-${rack.id}`}>
+                    <button className="tree-row level-2 tree-toggle" onClick={() => toggle(`rack-${rack.id}`)}>
+                      <Arrow id={`rack-${rack.id}`} def={true} /><Server /><span>{rack.name}</span>
+                    </button>
+                    {isOpen(`rack-${rack.id}`) && rack.nodes?.map((n) => {
+                      const live = nodes.find((x) => x.id === n.id) || n;
+                      const st = (live.status || "").toLowerCase();
+                      return (
+                        <button key={n.id} className={`tree-row level-3 ${selected?.id === n.id ? "selected" : ""}`}
+                          onClick={() => setSelected(live)}>
+                          <ChevronRight /><Cpu /><span>{n.name}</span><i className={`status-dot ${st}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Fallback: render từ nodes seed (khi backend chưa kết nối)
   return (
     <div className="tree">
-      <button className="tree-row level-0 tree-toggle" onClick={() => toggle("site")}><Arrow id="site" /><Database /><span>DC Hồ Chí Minh</span><b className="ok-dot" /></button>
-      {open.site && <button className="tree-row level-1 tree-toggle" onClick={() => toggle("room")}><Arrow id="room" /><Box /><span>Phòng máy 01</span></button>}
-      {open.site && open.room && ["Rack A01", "Rack A02"].map((rack) => (
+      <button className="tree-row level-0 tree-toggle" onClick={() => toggle("site")}><Arrow id="site" def={true} /><Database /><span>DC Hồ Chí Minh</span><b className="ok-dot" /></button>
+      {isOpen("site") && <button className="tree-row level-1 tree-toggle" onClick={() => toggle("room")}><Arrow id="room" def={true} /><Box /><span>Phòng máy 01</span></button>}
+      {isOpen("site") && isOpen("room") && ["Rack A01", "Rack A02"].map((rack) => (
         <div key={rack}>
-          <button className="tree-row level-2 tree-toggle" onClick={() => toggle(rack)}><Arrow id={rack} /><Server /><span>{rack}</span></button>
-          {open[rack] && nodes.filter((n) => n.rack === rack).map((n) => (
-            <button key={n.id} className={`tree-row level-3 ${selected.id === n.id ? "selected" : ""}`} onClick={() => setSelected(n)}>
+          <button className="tree-row level-2 tree-toggle" onClick={() => toggle(rack)}><Arrow id={rack} def={true} /><Server /><span>{rack}</span></button>
+          {isOpen(rack) && nodes.filter((n) => n.rack === rack).map((n) => (
+            <button key={n.id} className={`tree-row level-3 ${selected?.id === n.id ? "selected" : ""}`} onClick={() => setSelected(n)}>
               <ChevronRight /><Cpu /><span>{n.name}</span><i className={`status-dot ${n.status}`} />
             </button>
           ))}
@@ -114,10 +156,10 @@ function AlertTable({ alerts, acknowledge, createFromAlert, full = false }) {
   );
 }
 
-function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket }) {
+function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket, hierarchyTree }) {
   if (active === "Digital Twin") return (
     <section className="detail-layout">
-      <div className="card detail-tree"><div className="card-title"><div><h2>Cây hạ tầng</h2><span>Site → Room → Rack → Node</span></div></div><Tree selected={selected} setSelected={setSelected} nodes={nodes} /></div>
+      <div className="card detail-tree"><div className="card-title"><div><h2>Cây hạ tầng</h2><span>Site → Room → Rack → Node</span></div></div><Tree selected={selected} setSelected={setSelected} nodes={nodes} hierarchyTree={hierarchyTree} /></div>
       <div className="node-grid">{nodes.map((n) => (
         <button key={n.id} className={`node-card card ${selected.id === n.id ? "chosen" : ""}`} onClick={() => setSelected(n)}>
           <div className={`server-symbol ${n.status}`}><Server /></div>
@@ -262,6 +304,7 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [summary,   setSummary]   = useState({ activeNodes: 3, totalNodes: 4, avgCpu: 58, maxTemp: 71, pue: 1.42 });
   const [connected, setConnected] = useState(false);
+  const [hierarchyTree, setHierarchyTree] = useState([]);
   const [toast,     setToast]     = useState("");
   const [menuOpen,  setMenuOpen]  = useState(false);
   const [tick,      setTick]      = useState(0);
@@ -302,8 +345,8 @@ export default function App() {
   // ── Load dữ liệu dashboard ──────────────────────────────────────────────────
   const loadData = useCallback(async (quiet = false) => {
     try {
-      const [dashboard, ticketData, pueData, auditData] = await Promise.all([
-        api.dashboard(), api.tickets(), api.pue(), api.auditLogs(),
+      const [dashboard, ticketData, pueData, auditData, treeData] = await Promise.all([
+        api.dashboard(), api.tickets(), api.pue(), api.auditLogs(), api.hierarchy(),
       ]);
       setNodes(dashboard.nodes);
       setSummary(dashboard.summary);
@@ -311,6 +354,7 @@ export default function App() {
       setTickets(ticketData);
       setReport(pueData);
       setAuditLogs(auditData);
+      setHierarchyTree(treeData || []);
       setConnected(true);
       setTick((t) => t + 1);
     } catch (error) {
@@ -446,7 +490,8 @@ export default function App() {
             <WorkspaceView
               active={active} nodes={nodes} selected={selected} setSelected={setSelected}
               alerts={alerts} tickets={tickets} report={report} auditLogs={auditLogs}
-              history={history} acknowledge={acknowledge} createFromAlert={createFromAlert} updateTicket={updateTicket}
+              history={history} acknowledge={acknowledge} createFromAlert={createFromAlert}
+              updateTicket={updateTicket} hierarchyTree={hierarchyTree}
             />
           ) : (
             <>
@@ -460,7 +505,7 @@ export default function App() {
               <section className="dashboard-grid">
                 <div className="card twin-panel">
                   <div className="card-title"><div><h2>Digital Twin</h2><span>Cấu trúc hạ tầng thời gian thực</span></div><button><MoreHorizontal /></button></div>
-                  <Tree selected={selected} setSelected={setSelected} nodes={nodes} />
+                  <Tree selected={selected} setSelected={setSelected} nodes={nodes} hierarchyTree={hierarchyTree} />
                   <div className="legend">
                     <span><i className="status-dot healthy" />Hoạt động</span>
                     <span><i className="status-dot critical" />Cảnh báo</span>

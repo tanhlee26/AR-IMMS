@@ -64,7 +64,7 @@ export const api = {
   // Dashboard & Monitoring
   dashboard: () => request("/dashboard"),
   hierarchy: () => request("/hierarchy"),
-  telemetry: (nodeId, minutes = 15) => request(`/nodes/${nodeId}/telemetry?minutes=${minutes}`),
+  nodeDetail: (nodeId) => request(`/hierarchy/nodes/${nodeId}`),
 
   // Alerts
   alerts: () => request("/alerts"),
