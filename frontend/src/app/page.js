@@ -156,7 +156,11 @@ function AlertTable({ alerts, acknowledge, createFromAlert, full = false }) {
   );
 }
 
-function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket, hierarchyTree }) {
+function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket, hierarchyTree, requestClosure, approveClosure, rejectClosure }) {
+  const [closureTicket, setClosureTicket] = useState(null);
+  const [closureSummary, setClosureSummary] = useState("");
+  const [resolutionDetails, setResolutionDetails] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
   if (active === "Digital Twin") return (
     <section className="detail-layout">
       <div className="card detail-tree"><div className="card-title"><div><h2>Cây hạ tầng</h2><span>Site → Room → Rack → Node</span></div></div><Tree selected={selected} setSelected={setSelected} nodes={nodes} hierarchyTree={hierarchyTree} /></div>
@@ -213,19 +217,57 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
 
   if (active === "Tickets") return (
     <section className="tickets-board">
-      {["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => (
+      {["OPEN", "IN_PROGRESS", "PENDING_CLOSURE", "CLOSED"].map((status) => (
         <div className="ticket-column" key={status}>
-          <div className="column-head"><b>{{ OPEN: "Mới", IN_PROGRESS: "Đang xử lý", RESOLVED: "Chờ duyệt", CLOSED: "Đã đóng" }[status]}</b><span>{tickets.filter((t) => t.status === status).length}</span></div>
+          <div className="column-head">
+            <b>{{ OPEN: "Mới", IN_PROGRESS: "Đang xử lý", PENDING_CLOSURE: "Chờ duyệt đóng", CLOSED: "Đã đóng" }[status]}</b>
+            <span>{tickets.filter((t) => t.status === status).length}</span>
+          </div>
           {tickets.filter((t) => t.status === status).map((t) => (
             <article className="ticket-card card" key={t.id}>
-              <div><span className={`priority ${t.priority.toLowerCase()}`}>{t.priority}</span><small>{t.code}</small></div>
+              <div><span className={`priority ${t.priority?.toLowerCase()}`}>{t.priority}</span><small>{t.code}</small></div>
               <h3>{t.title}</h3><p>{t.description}</p>
               <div className="ticket-meta"><Server />{t.node}</div>
               <div className="ticket-meta"><UserRound />{t.assignee}</div>
               <select value={t.status} onChange={(e) => updateTicket(t.id, { status: e.target.value })}>
-                <option value="OPEN">Mới</option><option value="IN_PROGRESS">Đang xử lý</option>
-                <option value="RESOLVED">Chờ duyệt</option><option value="CLOSED">Đã đóng</option>
+                <option value="OPEN">Mới</option>
+                <option value="IN_PROGRESS">Đang xử lý</option>
+                <option value="PENDING_CLOSURE">Chờ duyệt đóng</option>
+                <option value="CLOSED">Đã đóng</option>
               </select>
+              {t.status === "IN_PROGRESS" && (
+                <button className="ack" onClick={() => { setClosureTicket(t); setClosureSummary(""); setResolutionDetails(""); }}>Yêu cầu đóng</button>
+              )}
+              {t.status === "PENDING_CLOSURE" && (
+                <div className="row-actions">
+                  <button className="ack" onClick={() => approveClosure(t.id)}>Phê duyệt đóng</button>
+                  <button className="ack" onClick={() => { setClosureTicket(t); setRejectionReason(""); }}>Từ chối</button>
+                </div>
+              )}
+              {closureTicket?.id === t.id && (
+                <div className="closure-panel">
+                  {t.status === "IN_PROGRESS" ? (
+                    <>
+                      <textarea value={closureSummary} onChange={(e) => setClosureSummary(e.target.value)} placeholder="Tóm tắt kết quả xử lý" />
+                      <textarea value={resolutionDetails} onChange={(e) => setResolutionDetails(e.target.value)} placeholder="Chi tiết nghiệm thu" />
+                      <button className="primary"
+                        disabled={!closureSummary.trim() || !resolutionDetails.trim()}
+                        onClick={async () => { await requestClosure(t.id, { summary: closureSummary, resolution_details: resolutionDetails }); setClosureTicket(null); }}>
+                        Gửi yêu cầu
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Lý do từ chối yêu cầu đóng" />
+                      <button className="primary"
+                        disabled={!rejectionReason.trim()}
+                        onClick={async () => { await rejectClosure(t.id, { rejection_reason: rejectionReason }); setClosureTicket(null); }}>
+                        Gửi từ chối
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -408,6 +450,18 @@ export default function App() {
     try { const item = await api.updateTicket(id, changes); setTickets((t) => t.map((x) => x.id === id ? item : x)); setToast(`Đã cập nhật ${item.code}`); }
     catch { setToast("Không thể cập nhật ticket"); }
   };
+  const requestClosure = async (id, data) => {
+    try { const item = await api.requestClosure(id, data); setTickets((t) => t.map((x) => x.id === id ? item : x)); setToast("Đã gửi yêu cầu đóng ticket"); }
+    catch { setToast("Không thể gửi yêu cầu đóng ticket"); }
+  };
+  const approveClosure = async (id) => {
+    try { const item = await api.approveClosure(id); setTickets((t) => t.map((x) => x.id === id ? item : x)); setToast("Đã phê duyệt đóng ticket"); }
+    catch { setToast("Không thể phê duyệt đóng ticket"); }
+  };
+  const rejectClosure = async (id, data) => {
+    try { const item = await api.rejectClosure(id, data); setTickets((t) => t.map((x) => x.id === id ? item : x)); setToast("Đã từ chối yêu cầu đóng ticket"); }
+    catch { setToast("Không thể từ chối yêu cầu đóng ticket"); }
+  };
 
   // ── Màn hình chờ (kiểm tra token) ──────────────────────────────────────────
   if (!authReady) {
@@ -492,6 +546,7 @@ export default function App() {
               alerts={alerts} tickets={tickets} report={report} auditLogs={auditLogs}
               history={history} acknowledge={acknowledge} createFromAlert={createFromAlert}
               updateTicket={updateTicket} hierarchyTree={hierarchyTree}
+              requestClosure={requestClosure} approveClosure={approveClosure} rejectClosure={rejectClosure}
             />
           ) : (
             <>
