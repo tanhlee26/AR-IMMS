@@ -132,7 +132,28 @@ Tạo tệp `.env` dựa trên bản mẫu [.env.example](file:///d:/Desktop/AR-
 cp .env.example .env
 ```
 
-### 2. Khởi chạy Backend API & WebSocket Gateway Server
+### 2. Khởi chạy bằng Docker Compose (Khuyến nghị: Backend + CSDL PostgreSQL)
+Chỉ với một câu lệnh, toàn bộ dịch vụ CSDL PostgreSQL và Backend API/WebSocket sẽ được tự động build, khởi tạo schema và seed dữ liệu mẫu:
+```bash
+docker compose up -d --build
+```
+- **Kiểm tra trạng thái các container:**
+  ```bash
+  docker compose ps
+  ```
+- **Theo dõi nhật ký khởi chạy & hoạt động:**
+  ```bash
+  docker compose logs -f backend
+  ```
+- **Dừng hệ thống:**
+  ```bash
+  docker compose down
+  ```
+> API Server lắng nghe tại: `http://localhost:5000`  
+> Health check endpoint: `http://localhost:5000/health`  
+> PostgreSQL Port: `5432` (Database: `ar_imms`, User: `postgres`, Password: `postgres_password`)
+
+### 3. Khởi chạy Thủ công (Không dùng Docker)
 ```bash
 # Kích hoạt môi trường ảo Python
 .\.venv\Scripts\Activate.ps1   # Trên Windows
@@ -141,13 +162,14 @@ source .venv/bin/activate      # Trên Linux/macOS
 # Cài đặt thư viện phụ thuộc
 pip install -r requirements.txt
 
+# Khởi tạo CSDL & nạp dữ liệu mẫu
+python backend/src/seed_full_demo.py
+
 # Khởi chạy Backend Server
 python backend/src/app.py
 ```
-> Server sẽ chạy tại: `http://localhost:5000`  
-> Health check endpoint: `http://localhost:5000/health`
 
-### 3. Khởi chạy Collector Agent Daemon (Trên 4 Laptop thử nghiệm)
+### 4. Khởi chạy Collector Agent Daemon (Trên 4 Laptop thử nghiệm)
 ```bash
 # Chuyển tới thư mục collector
 cd collector
