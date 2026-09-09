@@ -4,10 +4,10 @@
 ![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)
 ![Python](https://img.shields.io/badge/Python-3.11+-informational.svg)
 ![Flask](https://img.shields.io/badge/Framework-Flask-green.svg)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Supabase-blue.svg)
+![PostgreSQL](<https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Supabase-blue.svg>)
 ![WebSocket](https://img.shields.io/badge/RealTime-Socket.IO-black.svg)
 ![LaTeX](https://img.shields.io/badge/Docs-LaTeX-red.svg)
-![University](https://img.shields.io/badge/University-University%20of%20Transport%20Ho%20Chi%20Minh%20City-navy.svg)
+![University](<https://img.shields.io/badge/University-University%20of%20Transport%20Ho%20Chi%20Minh%20City-navy.svg>)
 
 **Hệ thống Giám sát và Bảo trì Cơ sở Hạ tầng Tích hợp Thực tế Tăng cường (AR-IMMS)** kết hợp giữa mô hình **Digital Twin**, truyền phát dữ liệu đo đạc thời gian thực (**Telemetry Streaming**), thuật toán **Lọc bão Cảnh báo (Alert Storm Deduplication)** và công nghệ **Thực tế Tăng cường (Augmented Reality)** để tối ưu hóa công tác giám sát, phát hiện sự cố và bảo trì thiết bị trong Data Center.
 
@@ -17,12 +17,12 @@
 
 Dự án được thực hiện theo phương pháp luận **Agile/Scrum** trong vòng 4 tuần (Mô phỏng thử nghiệm thực tế trên **4 Laptop LAN đóng vai trò như Server** và **Camera Điện thoại di động quét mã QR/ArUco**):
 
-| Thành viên | Vai trò Scrum | Phân công Nhiệm vụ Chính |
-| :--- | :--- | :--- |
-| **Thế Anh** | **Dev 1 (Backend & DB Lead)** | Thiết kế CSDL Postgres/Supabase, 20 ORM Models, JWT & RBAC, Telemetry Ingestion API, WebSocket Gateway, Engine Cảnh báo & Thuật toán Lọc bão Alert, API Quản lý Vòng đời Ticket. |
-| **Ngọc Ân** | **Dev 2 (Testbed & Collector Lead)** | Thiết lập Testbed 4 Laptop LAN, xây dựng Collector Agent Daemon (`psutil`), Hàng đợi bộ nhớ đệm Offline Queue, Module giám sát Docker Containers. |
-| **Thiện Nhân** | **Dev 3 (Product Owner & Web Lead)** | Quản lý Product Backlog, xây dựng Giao diện Web Command Center (Next.js), Sơ đồ cây Digital Twin và Đồ thị Telemetry thời gian thực. |
-| **Duy Khang** | **Dev 4 (Mobile AR Lead)** | Xây dựng Ứng dụng di động Mobile AR (React Native/Android), Nhận diện QR/ArUco Marker, Hiển thị thẻ số liệu ảo AR Overlay và Giao diện Xử lý Ticket Nghiệm thu. |
+| Thành viên           | Vai trò Scrum                             | Phân công Nhiệm vụ Chính                                                                                                                                                                 |
+| :--------------------- | :----------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Thế Anh**     | **Dev 1 (Backend & DB Lead)**        | Thiết kế CSDL Postgres/Supabase, 20 ORM Models, JWT & RBAC, Telemetry Ingestion API, WebSocket Gateway, Engine Cảnh báo & Thuật toán Lọc bão Alert, API Quản lý Vòng đời Ticket. |
+| **Ngọc Ân**    | **Dev 2 (Testbed & Collector Lead)** | Thiết lập Testbed 4 Laptop LAN, xây dựng Collector Agent Daemon (`psutil`), Hàng đợi bộ nhớ đệm Offline Queue, Module giám sát Docker Containers.                              |
+| **Thiện Nhân** | **Dev 3 (Product Owner & Web Lead)** | Quản lý Product Backlog, xây dựng Giao diện Web Command Center (Next.js), Sơ đồ cây Digital Twin và Đồ thị Telemetry thời gian thực.                                           |
+| **Duy Khang**    | **Dev 4 (Mobile AR Lead)**           | Xây dựng Ứng dụng di động Mobile AR (React Native/Android), Nhận diện QR/ArUco Marker, Hiển thị thẻ số liệu ảo AR Overlay và Giao diện Xử lý Ticket Nghiệm thu.            |
 
 ---
 
@@ -100,43 +100,48 @@ AR-IMMS/
 
 ## 📡 Danh sách API Endpoints Chính
 
-| Phương thức | Endpoint API | Chức năng & Quyền hạn |
-| :--- | :--- | :--- |
-| **POST** | `/api/v1/auth/login` | Đăng nhập tài khoản, trả về JWT Access Token & Vai trò RBAC |
-| **POST** | `/api/v1/auth/register` | Đăng ký tài khoản người dùng mới |
-| **GET** | `/api/v1/auth/me` | Trích xuất thông tin cá nhân & quyền hạn (Yêu cầu JWT Bearer Token) |
-| **POST** | `/api/v1/auth/seed-users` | Khởi tạo 3 tài khoản thử nghiệm mẫu và danh sách vai trò |
-| **GET** | `/api/v1/nodes/<node_id>/telemetry/realtime` | Trích xuất chỉ số thời gian thực, alert đang bật và cây Digital Twin |
-| **GET** | `/api/v1/telemetry/markers/<marker_code>/realtime` | Trích xuất thông số telemetry đính kèm tọa độ 3D AR Overlay khi quét QR/ArUco |
-| **POST** | `/api/v1/telemetry` | Collector Agent gửi bản tin telemetry snapshot |
-| **GET** | `/api/v1/nodes/<node_id>/telemetry/history` | Trích xuất chuỗi thời gian lịch sử đo đạc vẽ đồ thị |
-| **GET** | `/api/v1/alerts` | Lấy danh sách các cảnh báo (Alerts) đang mở |
-| **POST** | `/api/v1/alerts/<alert_id>/acknowledge` | Vận hành viên xác nhận tiếp nhận xử lý Alert |
-| **GET** | `/api/v1/alert-thresholds` | Trích xuất danh sách cấu hình ngưỡng cảnh báo |
-| **POST** | `/api/v1/alerts/check-heartbeats` | Kiểm tra mất kết nối Heartbeat quá hạn >90s |
-| **GET** | `/api/v1/tickets` | Trích xuất danh sách Ticket bảo trì theo bộ lọc |
-| **POST** | `/api/v1/tickets` | Tạo mới một Phiếu công việc Ticket |
-| **POST** | `/api/v1/tickets/<ticket_id>/assign` | Phân công Kỹ thuật viên xử lý Ticket (`IN_PROGRESS`) |
-| **POST** | `/api/v1/tickets/<ticket_id>/notes` | Đăng ghi chú cập nhật tiến độ hiện trường |
-| **POST** | `/api/v1/tickets/<ticket_id>/request-closure` | Kỹ thuật viên gửi Yêu cầu Nghiệm thu đóng Ticket (`PENDING_CLOSURE`) |
-| **POST** | `/api/v1/tickets/<ticket_id>/approve-closure` | Vận hành viên phê duyệt đóng Ticket (`CLOSED` & Lưu Lịch sử Bảo trì) |
-| **POST** | `/api/v1/tickets/<ticket_id>/reject-closure` | Vận hành viên từ chối yêu cầu đóng Ticket |
+| Phương thức | Endpoint API                                         | Chức năng & Quyền hạn                                                                |
+| :------------- | :--------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| **POST** | `/api/v1/auth/login`                               | Đăng nhập tài khoản, trả về JWT Access Token & Vai trò RBAC                      |
+| **POST** | `/api/v1/auth/register`                            | Đăng ký tài khoản người dùng mới                                                |
+| **GET**  | `/api/v1/auth/me`                                  | Trích xuất thông tin cá nhân & quyền hạn (Yêu cầu JWT Bearer Token)             |
+| **POST** | `/api/v1/auth/seed-users`                          | Khởi tạo 3 tài khoản thử nghiệm mẫu và danh sách vai trò                       |
+| **GET**  | `/api/v1/nodes/<node_id>/telemetry/realtime`       | Trích xuất chỉ số thời gian thực, alert đang bật và cây Digital Twin           |
+| **GET**  | `/api/v1/telemetry/markers/<marker_code>/realtime` | Trích xuất thông số telemetry đính kèm tọa độ 3D AR Overlay khi quét QR/ArUco |
+| **POST** | `/api/v1/telemetry`                                | Collector Agent gửi bản tin telemetry snapshot                                         |
+| **GET**  | `/api/v1/nodes/<node_id>/telemetry/history`        | Trích xuất chuỗi thời gian lịch sử đo đạc vẽ đồ thị                         |
+| **GET**  | `/api/v1/alerts`                                   | Lấy danh sách các cảnh báo (Alerts) đang mở                                       |
+| **POST** | `/api/v1/alerts/<alert_id>/acknowledge`            | Vận hành viên xác nhận tiếp nhận xử lý Alert                                    |
+| **GET**  | `/api/v1/alert-thresholds`                         | Trích xuất danh sách cấu hình ngưỡng cảnh báo                                   |
+| **POST** | `/api/v1/alerts/check-heartbeats`                  | Kiểm tra mất kết nối Heartbeat quá hạn >90s                                        |
+| **GET**  | `/api/v1/tickets`                                  | Trích xuất danh sách Ticket bảo trì theo bộ lọc                                   |
+| **POST** | `/api/v1/tickets`                                  | Tạo mới một Phiếu công việc Ticket                                                 |
+| **POST** | `/api/v1/tickets/<ticket_id>/assign`               | Phân công Kỹ thuật viên xử lý Ticket (`IN_PROGRESS`)                            |
+| **POST** | `/api/v1/tickets/<ticket_id>/notes`                | Đăng ghi chú cập nhật tiến độ hiện trường                                     |
+| **POST** | `/api/v1/tickets/<ticket_id>/request-closure`      | Kỹ thuật viên gửi Yêu cầu Nghiệm thu đóng Ticket (`PENDING_CLOSURE`)          |
+| **POST** | `/api/v1/tickets/<ticket_id>/approve-closure`      | Vận hành viên phê duyệt đóng Ticket (`CLOSED` & Lưu Lịch sử Bảo trì)       |
+| **POST** | `/api/v1/tickets/<ticket_id>/reject-closure`       | Vận hành viên từ chối yêu cầu đóng Ticket                                       |
 
 ---
 
 ## 🚀 Hướng dẫn Khởi chạy Hệ thống Backend & Collector Agent
 
 ### 1. Thiết lập Môi trường & Biến môi trường
+
 Tạo tệp `.env` dựa trên bản mẫu [.env.example](file:///d:/Desktop/AR-IMMS/.env.example):
+
 ```bash
 cp .env.example .env
 ```
 
 ### 2. Khởi chạy bằng Docker Compose (Khuyến nghị: Backend + CSDL PostgreSQL)
+
 Chỉ với một câu lệnh, toàn bộ dịch vụ CSDL PostgreSQL và Backend API/WebSocket sẽ được tự động build, khởi tạo schema và seed dữ liệu mẫu:
+
 ```bash
 docker compose up -d --build
 ```
+
 - **Kiểm tra trạng thái các container:**
   ```bash
   docker compose ps
@@ -149,11 +154,13 @@ docker compose up -d --build
   ```bash
   docker compose down
   ```
-> API Server lắng nghe tại: `http://localhost:5000`  
-> Health check endpoint: `http://localhost:5000/health`  
+
+> API Server lắng nghe tại: `http://localhost:5000`
+> Health check endpoint: `http://localhost:5000/health`
 > PostgreSQL Port: `5432` (Database: `ar_imms`, User: `postgres`, Password: `postgres_password`)
 
 ### 3. Khởi chạy Thủ công (Không dùng Docker)
+
 ```bash
 # Kích hoạt môi trường ảo Python
 .\.venv\Scripts\Activate.ps1   # Trên Windows
@@ -170,6 +177,7 @@ python backend/src/app.py
 ```
 
 ### 4. Khởi chạy Collector Agent Daemon (Trên 4 Laptop thử nghiệm)
+
 ```bash
 # Chuyển tới thư mục collector
 cd collector
@@ -185,10 +193,12 @@ python src/agent.py
 Tài liệu SRS được soạn thảo theo chuẩn IEEE 830 bằng ngôn ngữ LaTeX mô-đun hóa trong thư mục `docs/SRS/`.
 
 Để biên dịch ra tệp PDF hoàn chỉnh:
+
 ```bash
 cd docs/SRS
 pdflatex -interaction=nonstopmode SRS.tex
 ```
+
 Kết quả bản PDF hoàn chỉnh (40 trang) sẽ được xuất tại: `docs/SRS/SRS.pdf`.
 
 ---
@@ -206,7 +216,7 @@ Kết quả bản PDF hoàn chỉnh (40 trang) sẽ được xuất tại: `docs
 
 ## 👥 Đơn vị Thực hiện
 
-**Dự án:** AR-Integrated Infrastructure Monitoring and Maintenance System (AR-IMMS)  
-**Trường:** Đại học Giao thông vận tải TP. Hồ Chí Minh (*University of Transport Ho Chi Minh City*)  
-**Nhóm Thực hiện:** Thế Anh (Dev 1), Ngọc Ân (Dev 2), Thiện Nhân (Dev 3), Duy Khang (Dev 4)  
+**Dự án:** AR-Integrated Infrastructure Monitoring and Maintenance System (AR-IMMS)
+**Trường:** Đại học Giao thông vận tải TP. Hồ Chí Minh (*University of Transport Ho Chi Minh City*)
+**Nhóm Thực hiện:** Thế Anh (Dev 1), Ngọc Ân (Dev 2), Thiện Nhân (Dev 3), Duy Khang (Dev 4)
 **Phiên bản:** 1.0.0 (Sprint 3 Final Update)
