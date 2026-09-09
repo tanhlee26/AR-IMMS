@@ -1,101 +1,81 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
-import { useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
-import { CodeScanner } from 'react-native-vision-camera-barcode-scanner';
+import React, { useState } from 'react';
+import { StyleSheet, View, StatusBar } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { AuthProvider } from './src/context/AuthContext';
+import { AppProvider, useApp } from './src/context/AppContext';
+import { Header } from './src/components/common/Header';
+import { NavigationBar } from './src/components/common/NavigationBar';
+import { NotificationBanner } from './src/components/notifications/NotificationBanner';
+import { SettingsModal } from './src/components/modals/SettingsModal';
+import { ARScanScreen } from './src/screens/ARScanScreen';
+import { TicketsScreen } from './src/screens/TicketsScreen';
 
-function App(): React.JSX.Element {
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice('back');
-  const [lastScanned, setLastScanned] = useState<string | null>(null);
-  const [isScanningPaused, setIsScanningPaused] = useState(false);
+function MainNavigator(): React.JSX.Element {
+  const [currentTab, setCurrentTab] = useState<'AR_SCAN' | 'TICKETS'>('AR_SCAN');
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+  const { selectSimulatedNode } = useApp();
 
-  useEffect(() => {
-    if (!hasPermission) {
-      requestPermission();
+  const handleNotificationPress = (nodeId?: number) => {
+    if (nodeId) {
+      const formattedNodeId = `NODE-${String(nodeId).padStart(2, '0')}`;
+      selectSimulatedNode(formattedNodeId);
+      setCurrentTab('AR_SCAN');
+    } else {
+      setCurrentTab('TICKETS');
     }
-  }, [hasPermission, requestPermission]);
-
-  const handleBarcodeScanned = useCallback((barcodes: { rawValue: string }[]) => {
-    if (barcodes.length === 0 || isScanningPaused) return;
-
-    const scannedValue = barcodes[0].rawValue;
-    setLastScanned(scannedValue);
-    setIsScanningPaused(true);
-
-    Alert.alert(
-      'Đã quét được mã QR',
-      `Nội dung: ${scannedValue}`,
-      [
-        {
-          text: 'Quét tiếp',
-          onPress: () => setIsScanningPaused(false),
-        },
-      ]
-    );
-  }, [isScanningPaused]);
-
-  if (!hasPermission) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.text}>Đang xin quyền Camera...</Text>
-      </View>
-    );
-  }
-
-  if (device == null) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.text}>Không tìm thấy Camera trên thiết bị</Text>
-      </View>
-    );
-  }
+  };
 
   return (
-    <View style={styles.container}>
-      <CodeScanner
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive={!isScanningPaused}
-        barcodeFormats={['qr-code']}
-        onBarcodeScanned={handleBarcodeScanned}
-        onError={(error) => console.error('Code scanner failed:', error)}
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.overlayText}>
-          {lastScanned ? `Lần quét gần nhất: ${lastScanned}` : 'Đưa mã QR vào khung hình'}
-        </Text>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+
+      {/* Thanh Header AR-IMMS */}
+      <Header onOpenSettings={() => setSettingsModalVisible(true)} />
+
+      {/* Thông báo đẩy nổi phía trên */}
+      <NotificationBanner onPressNotification={handleNotificationPress} />
+
+      {/* Màn hình chính */}
+      <View style={styles.contentArea}>
+        {currentTab === 'AR_SCAN' ? (
+          <ARScanScreen />
+        ) : (
+          <TicketsScreen onNavigateToARScan={() => setCurrentTab('AR_SCAN')} />
+        )}
       </View>
-    </View>
+
+      {/* Thanh điều hướng tab phía dưới */}
+      <NavigationBar currentTab={currentTab} onSelectTab={setCurrentTab} />
+
+      {/* Modal Cài đặt Backend & Giả lập */}
+      <SettingsModal
+        visible={settingsModalVisible}
+        onClose={() => setSettingsModalVisible(false)}
+      />
+    </SafeAreaView>
+  );
+}
+
+function App(): React.JSX.Element {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppProvider>
+          <MainNavigator />
+        </AppProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
+    backgroundColor: '#0F172A',
   },
-  center: {
+  contentArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1e1e1e',
-  },
-  text: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  overlay: {
-    position: 'absolute',
-    bottom: 40,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 12,
-    borderRadius: 8,
-  },
-  overlayText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
+    backgroundColor: '#090D16',
   },
 });
 
