@@ -40,9 +40,8 @@ def get_active_alerts():
 
     return success_response(data=data, message="Trích xuất danh sách cảnh báo đang mở thành công.")
 
-@alert_bp.route("/alerts/<int:alert_id>/acknowledge", methods=["POST"])
-@jwt_required
 @alert_bp.route("/alerts/<int:alert_id>/acknowledge", methods=["POST", "PATCH"])
+@jwt_required
 def acknowledge_alert(alert_id: int):
     """
     [POST] /api/v1/alerts/<alert_id>/acknowledge
