@@ -312,7 +312,7 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
         <table>
           <thead><tr><th>THỜI GIAN</th><th>NGƯỜI DÙNG</th><th>HÀNH ĐỘNG</th><th>ĐỐI TƯỢNG</th><th>IP</th><th>CHI TIẾT</th></tr></thead>
           <tbody>
-            {auditLogs.map((log) => (
+            {(Array.isArray(auditLogs) ? auditLogs : (auditLogs?.logs || [])).map((log) => (
               <tr key={log.id}>
                 <td><Clock3 />{log.timestamp ? new Date(log.timestamp).toLocaleString("vi-VN") : "N/A"}</td>
                 <td><b>{log.username || "system"}</b><small>audit #{log.id}</small></td>
@@ -395,7 +395,7 @@ export default function App() {
       setAlerts(dashboard.alerts);
       setTickets(ticketData);
       setReport(pueData);
-      setAuditLogs(auditData);
+      setAuditLogs(Array.isArray(auditData) ? auditData : (auditData?.logs || []));
       setHierarchyTree(treeData || []);
       setConnected(true);
       setTick((t) => t + 1);

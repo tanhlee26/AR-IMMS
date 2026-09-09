@@ -4,7 +4,7 @@ import cv2.aruco as aruco
 
 # TC-53: tao QR code va ArUco marker cho 3 laptop node trong testbed
 OUTPUT_DIR = "markers"
-NODE_IDS = ["NODE-01", "NODE-02", "NODE-03"]
+NODE_IDS = ["NODE-01", "NODE-02", "NODE-03", "NODE-04"]
 ARUCO_DICT = aruco.DICT_4X4_50
 QR_SCALE = 10
 ARUCO_SIZE = 400

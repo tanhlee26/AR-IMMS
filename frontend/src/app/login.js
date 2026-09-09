@@ -137,7 +137,7 @@ export default function LoginPage({ onSuccess }) {
         </form>
 
         <p className="login-hint">
-          Tài khoản mẫu: <code>admin</code> / <code>Admin@123</code>
+          Tài khoản mẫu: <code>admin</code> / <code>adminpassword2026</code> (hoặc <code>operator</code> / <code>operatorpassword2026</code>)
         </p>
       </div>
     </div>

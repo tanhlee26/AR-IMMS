@@ -12,7 +12,6 @@ from api.controllers.telemetry_controller import telemetry_bp
 from api.controllers.auth_controller import auth_bp
 from api.controllers.alert_controller import alert_bp
 from api.controllers.ticket_controller import ticket_bp
-from api.controllers.reporting_controller import reporting_bp
 from api.controllers.reporting_controller import reporting_bp, dashboard_bp
 from api.controllers.audit_controller import audit_bp
 from api.controllers.hierarchy_controller import hierarchy_bp

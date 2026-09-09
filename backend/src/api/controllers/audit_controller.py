@@ -26,7 +26,7 @@ def get_audit_logs():
     page_size = int(request.args.get("page_size", 50))
 
     audit_service = container.audit_service()
-    data = audit_service.get_logs(
+    raw_data = audit_service.get_logs(
         user_id=user_id,
         action=action,
         target_entity=target_entity,
@@ -35,11 +35,9 @@ def get_audit_logs():
         page=page,
         page_size=page_size
     )
-    return success_response(data=data, message="Trích xuất nhật ký kiểm toán thành công.")
 
-    # Đảm bảo tương thích với frontend gọi dạng mảng hoặc đối tượng
     formatted_logs = []
-    for l in data["logs"]:
+    for l in raw_data.get("logs", []):
         formatted_logs.append({
             "id": l["id"],
             "timestamp": l["timestamp"],

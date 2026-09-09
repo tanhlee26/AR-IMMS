@@ -1,0 +1,5 @@
+node_id,qr_content,aruco_id,qr_file,aruco_file
+NODE-01,arimms://node/NODE-01,1,qr_NODE-01.png,aruco_1_NODE-01.png
+NODE-02,arimms://node/NODE-02,2,qr_NODE-02.png,aruco_2_NODE-02.png
+NODE-03,arimms://node/NODE-03,3,qr_NODE-03.png,aruco_3_NODE-03.png
+NODE-04,arimms://node/NODE-04,4,qr_NODE-04.png,aruco_4_NODE-04.png
