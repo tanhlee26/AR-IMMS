@@ -156,6 +156,157 @@ function AlertTable({ alerts, acknowledge, createFromAlert, full = false }) {
   );
 }
 
+// ─── TC-62: Telemetry multi-line chart ───────────────────────────────────────
+const METRICS_CFG = [
+  { key: "cpu_usage_percent",    label: "CPU",      unit: "%",    color: "#2795e8", icon: Cpu,         tone: "blue"   },
+  { key: "memory_usage_percent", label: "Memory",   unit: "%",    color: "#7c5cfc", icon: Database,    tone: "purple" },
+  { key: "temperature_celsius",  label: "Nhiệt độ", unit: "°C",   color: "#ef5c68", icon: Thermometer, tone: "red"    },
+  { key: "disk_usage_percent",   label: "Disk",     unit: "%",    color: "#efa83f", icon: HardDrive,   tone: "amber"  },
+  { key: "network_rx_kbps",      label: "Net RX",   unit: "KB/s", color: "#22c55e", icon: Network,     tone: "green"  },
+  { key: "network_tx_kbps",      label: "Net TX",   unit: "KB/s", color: "#f97316", icon: Network,     tone: "orange" },
+];
+
+function MultiLineChart({ series, height = 180 }) {
+  if (!series || series.every((s) => !s.points.length))
+    return <div style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", fontSize: 12 }}>Chưa có dữ liệu lịch sử</div>;
+  const allVals = series.flatMap((s) => s.points.map((p) => p.value));
+  const maxV = Math.max(...allVals, 1), minV = Math.min(...allVals, 0), range = maxV - minV || 1;
+  const W = 600, H = height, pad = { t: 8, b: 20, l: 36, r: 8 };
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const toX = (i, len) => pad.l + (i / Math.max(len - 1, 1)) * cW;
+  const toY = (v) => pad.t + cH - ((v - minV) / range) * cH;
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => minV + r * range);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height }}>
+      {yTicks.map((v, i) => (
+        <g key={i}>
+          <line x1={pad.l} x2={W - pad.r} y1={toY(v)} y2={toY(v)} stroke="#e5e7eb" strokeWidth="0.5" />
+          <text x={pad.l - 4} y={toY(v) + 4} textAnchor="end" fontSize="9" fill="#9ca3af">{Math.round(v)}</text>
+        </g>
+      ))}
+      {series.map((s) => {
+        if (!s.points.length) return null;
+        const pts = s.points.map((p, i) => `${toX(i, s.points.length)},${toY(p.value)}`).join(" ");
+        return <polyline key={s.label} points={pts} fill="none" stroke={s.color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />;
+      })}
+      {series[0]?.points.filter((_, i, arr) => i === 0 || i === Math.floor(arr.length / 2) || i === arr.length - 1).map((p, i) => (
+        <text key={i} x={toX(series[0].points.indexOf(p), series[0].points.length)} y={H - 4} textAnchor="middle" fontSize="9" fill="#9ca3af">
+          {new Date(p.ts).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+function TelemetryView({ nodes, selected, setSelected, history }) {
+  const [activeMetrics, setActiveMetrics] = useState(["cpu_usage_percent", "memory_usage_percent", "temperature_celsius"]);
+  const [hours, setHours] = useState(1);
+  const [historyData, setHistoryData] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selected?.id) return;
+    setLoading(true);
+    Promise.all(
+      activeMetrics.map((m) =>
+        api.telemetryHistory(selected.id, m, hours)
+          .then((d) => ({ key: m, points: (d?.data_points || []).map((p) => ({ ts: p.timestamp, value: p.value })) }))
+          .catch(() => ({ key: m, points: [] }))
+      )
+    ).then((results) => {
+      const map = {};
+      results.forEach((r) => { map[r.key] = r.points; });
+      setHistoryData(map);
+      setLoading(false);
+    });
+  }, [selected?.id, activeMetrics.join(","), hours]);
+
+  const toggleMetric = (key) =>
+    setActiveMetrics((prev) => prev.includes(key) ? (prev.length > 1 ? prev.filter((k) => k !== key) : prev) : [...prev, key]);
+
+  const series = activeMetrics.map((key) => {
+    const cfg = METRICS_CFG.find((m) => m.key === key);
+    const fallback = history.map((v, i) => ({ ts: new Date(Date.now() - (history.length - i) * 5000).toISOString(), value: v }));
+    return { label: cfg.label, color: cfg.color, points: historyData[key]?.length ? historyData[key] : fallback };
+  });
+
+  const latest = (key) => {
+    const pts = historyData[key];
+    if (pts?.length) return pts[pts.length - 1].value;
+    return { cpu_usage_percent: selected.cpu, memory_usage_percent: selected.ram, temperature_celsius: selected.temp, disk_usage_percent: selected.disk }[key] ?? 0;
+  };
+
+  return (
+    <section className="card full-panel">
+      <div className="card-title">
+        <div><h2>Telemetry trực tiếp</h2><span>Cập nhật từ Collector mỗi 5 giây · {selected?.name}</span></div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
+            <option value={1}>1 giờ</option><option value={6}>6 giờ</option><option value={24}>24 giờ</option>
+          </select>
+          <select value={selected?.id} onChange={(e) => setSelected(nodes.find((n) => n.id === Number(e.target.value)))}>
+            {nodes.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="selected-summary">
+        <div className={`server-symbol ${selected?.status}`}><Server /></div>
+        <div><b>{selected?.name}</b><span>{selected?.ip} · {selected?.rack}</span></div>
+        <div className={`status-pill ${selected?.status}`}>{selected?.status === "healthy" || selected?.status === "ONLINE" ? "Online" : selected?.status === "critical" ? "Critical" : "Offline"}</div>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "12px 0 8px" }}>
+        {METRICS_CFG.map((m) => (
+          <button key={m.key} onClick={() => toggleMetric(m.key)} style={{
+            padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer",
+            border: `1.5px solid ${activeMetrics.includes(m.key) ? m.color : "#e5e7eb"}`,
+            background: activeMetrics.includes(m.key) ? m.color + "18" : "transparent",
+            color: activeMetrics.includes(m.key) ? m.color : "#9ca3af",
+          }}>{m.label}</button>
+        ))}
+        {loading && <span style={{ fontSize: 11, color: "#9ca3af", alignSelf: "center" }}>Đang tải...</span>}
+      </div>
+      <div style={{ background: "#f8fafc", borderRadius: 10, padding: "8px 4px", marginBottom: 16 }}>
+        <MultiLineChart series={series} height={180} />
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 4 }}>
+          {series.map((s) => (
+            <span key={s.label} style={{ fontSize: 10, color: s.color, display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ display: "inline-block", width: 16, height: 2.5, background: s.color, borderRadius: 2 }} />{s.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="telemetry-cards">
+        {METRICS_CFG.slice(0, 4).map((m) => (
+          <Metric key={m.key} icon={m.icon} label={m.label}
+            value={Math.round(latest(m.key) * 10) / 10} unit={m.unit} tone={m.tone}
+            values={historyData[m.key]?.slice(-16).map((p) => p.value) || history} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── TC-69: Alert panel với filter functional ─────────────────────────────────
+function AlertPanel({ alerts, acknowledge, createFromAlert }) {
+  const [filter, setFilter] = useState("ALL");
+  const visible = alerts.filter((a) => filter === "ALL" || a.severity.toUpperCase() === filter);
+  return (
+    <section className="card full-panel">
+      <div className="card-title">
+        <div><h2>Quản lý cảnh báo</h2><span>{alerts.filter((a) => a.state === "Chưa xử lý").length} cảnh báo cần xác nhận</span></div>
+        <div className="filter-pills">
+          {["ALL", "CRITICAL", "WARNING"].map((f) => (
+            <button key={f} className={filter === f ? "selected" : ""} onClick={() => setFilter(f)}>
+              {f === "ALL" ? "Tất cả" : f === "CRITICAL" ? "Critical" : "Warning"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <AlertTable alerts={visible} acknowledge={acknowledge} createFromAlert={createFromAlert} full />
+    </section>
+  );
+}
+
 function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, report, auditLogs, history, acknowledge, createFromAlert, updateTicket, hierarchyTree }) {
   if (active === "Digital Twin") return (
     <section className="detail-layout">
@@ -176,40 +327,9 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
     </section>
   );
 
-  if (active === "Telemetry") return (
-    <section className="card full-panel">
-      <div className="card-title">
-        <div><h2>Telemetry trực tiếp</h2><span>Dữ liệu mới được đồng bộ từ Collector mỗi 5 giây</span></div>
-        <select value={selected.id} onChange={(e) => setSelected(nodes.find((n) => n.id === Number(e.target.value)))}>
-          {nodes.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
-        </select>
-      </div>
-      <div className="telemetry-focus">
-        <div className="selected-summary">
-          <div className={`server-symbol ${selected.status}`}><Server /></div>
-          <div><b>{selected.name}</b><span>{selected.ip} · {selected.rack}</span></div>
-          <div className={`status-pill ${selected.status}`}>{selected.status === "healthy" ? "Healthy" : selected.status === "critical" ? "Critical" : "Unavailable"}</div>
-        </div>
-        <div className="big-chart"><div className="chart-y"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div className="chart-area"><span /><span /><span /><span /><span /><Sparkline values={history} color="#2795e8" /></div></div>
-        <div className="telemetry-cards">
-          <Metric icon={Cpu}         label="CPU"      value={selected.cpu}         unit="%"  tone="blue"  values={history} />
-          <Metric icon={Database}    label="Memory"   value={selected.ram}         unit="%"  tone="blue"  values={history.map((v) => Math.max(1, v - 12))} />
-          <Metric icon={Thermometer} label="Nhiệt độ" value={selected.temp}        unit="°C" tone="red"   values={history.map((v) => v * 0.7)} />
-          <Metric icon={HardDrive}   label="Disk"     value={selected.disk || 0}   unit="%"  tone="amber" values={history.map((v) => v * 0.8)} />
-        </div>
-      </div>
-    </section>
-  );
+  if (active === "Telemetry") return <TelemetryView nodes={nodes} selected={selected} setSelected={setSelected} history={history} />;
 
-  if (active === "Cảnh báo") return (
-    <section className="card full-panel">
-      <div className="card-title">
-        <div><h2>Quản lý cảnh báo</h2><span>{alerts.filter((a) => a.state === "Chưa xử lý").length} cảnh báo cần xác nhận</span></div>
-        <div className="filter-pills"><button className="selected">Tất cả</button><button>Critical</button><button>Warning</button></div>
-      </div>
-      <AlertTable alerts={alerts} acknowledge={acknowledge} createFromAlert={createFromAlert} full />
-    </section>
-  );
+  if (active === "Cảnh báo") return <AlertPanel alerts={alerts} acknowledge={acknowledge} createFromAlert={createFromAlert} />;
 
   if (active === "Tickets") return (
     <section className="tickets-board">

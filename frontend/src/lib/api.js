@@ -61,10 +61,13 @@ export const api = {
     }),
   me: () => request("/auth/me"),
 
-  // Dashboard & Monitoring
-  dashboard: () => request("/dashboard"),
+  telemetry: (nodeId) => request(`/nodes/${nodeId}/telemetry/realtime`),
+  telemetryHistory: (nodeId, metric, hours = 1) => request(`/nodes/${nodeId}/telemetry/history?metric_type=${metric}&hours=${hours}`),
   hierarchy: () => request("/hierarchy"),
   nodeDetail: (nodeId) => request(`/hierarchy/nodes/${nodeId}`),
+
+  // Dashboard
+  dashboard: () => request("/dashboard"),
 
   // Alerts
   alerts: () => request("/alerts"),
@@ -74,6 +77,9 @@ export const api = {
   tickets: () => request("/tickets"),
   createTicket: (data) => request("/tickets", { method: "POST", body: JSON.stringify(data) }),
   updateTicket: (id, data) => request(`/tickets/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  requestClosure: (id, data) => request(`/tickets/${id}/request-closure`, { method: "POST", body: JSON.stringify(data) }),
+  approveClosure: (id) => request(`/tickets/${id}/approve-closure`, { method: "POST" }),
+  rejectClosure: (id, data) => request(`/tickets/${id}/reject-closure`, { method: "POST", body: JSON.stringify(data) }),
 
   // Reports & Audit
   pue: () => request("/reports/pue"),
