@@ -15,6 +15,7 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import RNFS from 'react-native-fs';
+import { getTicketById } from './src/api';
 
 const { ArucoModule } = NativeModules;
 
@@ -28,6 +29,11 @@ function App(): React.JSX.Element {
   const [mode, setMode] = useState<Mode>('qr');
   const [arucoResult, setArucoResult] = useState<string>('');
   const cameraRef = useRef<Camera>(null);
+
+  // TC-63: state cho tra cứu ticket qua QR
+  const [loading, setLoading] = useState(false);
+  const [ticketData, setTicketData] = useState<any>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!hasPermission) {
@@ -44,9 +50,39 @@ function App(): React.JSX.Element {
       setLastScanned(scannedValue);
       setIsScanningPaused(true);
 
-      Alert.alert('Đã quét được mã QR', `Nội dung: ${scannedValue}`, [
-        { text: 'Quét tiếp', onPress: () => setIsScanningPaused(false) },
-      ]);
+      const ticketId = parseInt(scannedValue, 10);
+      if (isNaN(ticketId)) {
+        setError('Mã QR không hợp lệ (không phải số)');
+        setTicketData(null);
+        Alert.alert('Lỗi', 'Mã QR không hợp lệ', [
+          { text: 'Quét tiếp', onPress: () => setIsScanningPaused(false) },
+        ]);
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+      getTicketById(ticketId)
+        .then((data) => {
+          setTicketData(data);
+          Alert.alert(
+            'Tìm thấy ticket',
+            `Ticket #${data.id}: ${data.title ?? ''}`,
+            [{ text: 'Quét tiếp', onPress: () => setIsScanningPaused(false) }],
+          );
+        })
+        .catch((err) => {
+          const msg =
+            err.response?.status === 404
+              ? 'Không tìm thấy ticket với ID này'
+              : 'Lỗi kết nối server';
+          setError(msg);
+          setTicketData(null);
+          Alert.alert('Lỗi', msg, [
+            { text: 'Quét tiếp', onPress: () => setIsScanningPaused(false) },
+          ]);
+        })
+        .finally(() => setLoading(false));
     },
   });
 
@@ -125,7 +161,13 @@ function App(): React.JSX.Element {
           <View style={styles.overlay}>
             <Text style={styles.overlayText}>
               {mode === 'qr'
-                ? lastScanned
+                ? loading
+                  ? 'Đang tra cứu ticket...'
+                  : error
+                  ? error
+                  : ticketData
+                  ? `Ticket #${ticketData.id}: ${ticketData.title ?? ''} (${ticketData.status ?? ''})`
+                  : lastScanned
                   ? `Lần quét gần nhất: ${lastScanned}`
                   : 'Đưa mã QR vào khung hình'
                 : arucoResult || 'Bấm nút để detect marker'}
