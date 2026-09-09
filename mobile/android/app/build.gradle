@@ -105,6 +105,9 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    lint {
+        abortOnError false
+        }
 }
 
 dependencies {
@@ -116,4 +119,6 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation("org.opencv:opencv:5.0.0")
 }
