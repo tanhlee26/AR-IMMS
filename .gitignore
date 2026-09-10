@@ -61,6 +61,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Android & iOS Mobile Build Artifacts
+*.apk
+AR-IMMS-Mobile.apk
 mobile/android/app/.cxx/
 mobile/android/app/build/
 mobile/android/build/
