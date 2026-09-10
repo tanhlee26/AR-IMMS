@@ -29,7 +29,7 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType>({
-  backendUrl: 'http://10.0.2.2:5000',
+  backendUrl: 'http://192.168.3.187:5000',
   updateBackendUrl: () => {},
   isWsConnected: false,
   activeMarker: null,

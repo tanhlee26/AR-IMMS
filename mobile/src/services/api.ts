@@ -1,8 +1,8 @@
 import { RealtimeTelemetry, RemediationResult } from '../types/telemetry';
 import { Ticket } from '../types/ticket';
 
-// Cấu hình URL mặc định: Android Emulator dùng 10.0.2.2:5000, máy thật dùng IP LAN
-let BASE_URL = 'http://10.0.2.2:5000';
+// Cấu hình URL mặc định: Máy thật dùng IP LAN của Laptop Backend (192.168.3.187:5000), Emulator dùng 10.0.2.2:5000
+let BASE_URL = 'http://192.168.3.187:5000';
 let authToken: string | null = null;
 
 // Bộ nhớ đệm telemetry tối ưu độ trễ hiển thị (< 50ms)

@@ -18,23 +18,34 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }) => {
-  const { backendUrl, updateBackendUrl, isWsConnected, simulatorMode, setSimulatorMode } =
+  const { backendUrl, updateBackendUrl, isWsConnected, simulatorMode, setSimulatorMode, refreshTickets } =
     useApp();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [urlInput, setUrlInput] = useState(backendUrl);
 
-  const handleSaveUrl = () => {
-    if (!urlInput.trim()) {
+  const handleSaveUrl = async () => {
+    const cleanUrl = urlInput.trim();
+    if (!cleanUrl) {
       Alert.alert('Lỗi', 'URL không được để trống.');
       return;
     }
-    updateBackendUrl(urlInput.trim());
-    Alert.alert('Thành công', `Đã cập nhật Backend URL thành: ${urlInput.trim()}`);
+    updateBackendUrl(cleanUrl);
+    try {
+      await login();
+      await refreshTickets();
+      Alert.alert('Thành công', `Đã kết nối Backend: ${cleanUrl}`);
+    } catch {
+      Alert.alert('Thông báo', `Đã cập nhật Backend URL: ${cleanUrl}`);
+    }
   };
 
-  const setPresetUrl = (preset: string) => {
+  const setPresetUrl = async (preset: string) => {
     setUrlInput(preset);
     updateBackendUrl(preset);
+    try {
+      await login();
+      await refreshTickets();
+    } catch {}
   };
 
   return (

@@ -21,6 +21,12 @@ class Config:
         or f"sqlite:///{DEFAULT_DB_PATH}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": 10,
+        "max_overflow": 5,
+    }
     
     # Thông số cấu hình hệ thống AR-IMMS
     TELEMETRY_DEFAULT_INTERVAL_SECONDS = int(os.environ.get("TELEMETRY_INTERVAL", 5))

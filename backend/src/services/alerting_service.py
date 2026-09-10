@@ -148,10 +148,23 @@ class AlertingService:
         except Exception:
             pass
 
+        # Tra cứu tên node nếu có
+        node = NodeModel.query.get(alert.node_id) if alert.node_id else None
+        node_name = node.name if node else f"Node #{alert.node_id}"
+
         return {
             "id": alert.id,
+            "code": f"ALT-{alert.id:04d}",
+            "node_id": alert.node_id,
+            "nodeId": alert.node_id,
+            "severity": "Critical" if (alert.severity or "").upper() == "CRITICAL" else "Warning",
+            "source": node_name,
+            "message": alert.message,
+            "time": alert.triggered_at.strftime("%H:%M %d/%m") if alert.triggered_at else "Vừa xong",
             "status": alert.status,
-            "acknowledged_at": alert.acknowledged_at.strftime("%Y-%m-%dT%H:%M:%SZ") if alert.acknowledged_at else None
+            "state": "Đã xác nhận",
+            "acknowledged_at": alert.acknowledged_at.strftime("%Y-%m-%dT%H:%M:%SZ") if alert.acknowledged_at else None,
+            "acknowledged_by_user_id": user_id
         }
 
     def check_stale_node_heartbeats(self, stale_seconds: int = 90) -> List[Dict[str, Any]]:
