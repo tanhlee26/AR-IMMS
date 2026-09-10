@@ -1,4 +1,12 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const getApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined" && window.location.hostname) {
+    return `http://${window.location.hostname}:5000/api/v1`;
+  }
+  return "http://localhost:5000/api/v1";
+};
 
 // ─── Token helpers (localStorage) ───────────────────────────────────────────
 export const tokenStorage = {
@@ -11,8 +19,9 @@ export const tokenStorage = {
 async function request(path, options = {}) {
   const token = tokenStorage.get();
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const baseUrl = getApiUrl();
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -36,7 +45,8 @@ async function request(path, options = {}) {
 
 // ─── Auth endpoints (không cần token) ────────────────────────────────────────
 async function publicRequest(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
+  const baseUrl = getApiUrl();
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     cache: "no-store",

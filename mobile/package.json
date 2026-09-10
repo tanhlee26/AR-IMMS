@@ -16,7 +16,9 @@
     "react-native": "0.86.0",
     "react-native-fs": "^2.20.0",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-vision-camera": "^4.7.3"
+    "react-native-vision-camera": "^5.2.3",
+    "react-native-vision-camera-barcode-scanner": "^5.2.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

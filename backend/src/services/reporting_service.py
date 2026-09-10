@@ -309,13 +309,18 @@ class ReportingService:
         for a in raw_alerts:
             formatted_alerts.append({
                 "id": a.id,
+                "node_id": a.node_id,
+                "nodeId": a.node_id,
                 "code": f"ALT-{a.id:04d}",
-                "severity": "Critical" if a.severity == "CRITICAL" else "Warning",
+                "severity": "Critical" if (a.severity or "").upper() == "CRITICAL" else "Warning",
                 "source": nodes_dict.get(a.node_id, f"Node #{a.node_id}"),
                 "message": a.message,
                 "time": a.triggered_at.strftime("%H:%M %d/%m") if a.triggered_at else "Vừa xong",
+                "status": a.status,
                 "state": "Chưa xử lý" if a.status == "OPEN" else "Đã xác nhận"
             })
+
+        open_alerts_count = sum(1 for a in raw_alerts if a.status == "OPEN")
 
         return {
             "nodes": formatted_nodes,
@@ -324,7 +329,9 @@ class ReportingService:
                 "totalNodes": len(nodes),
                 "avgCpu": avg_cpu,
                 "maxTemp": max_temp,
-                "pue": pue_info["pue"]
+                "pue": pue_info["pue"],
+                "openAlerts": open_alerts_count,
+                "totalAlerts": len(raw_alerts)
             },
             "alerts": formatted_alerts
         }

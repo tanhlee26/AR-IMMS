@@ -105,7 +105,87 @@ def run_seed():
                 db.session.add(new_t)
         db.session.commit()
 
-        print("[6/6] Hoan tat!")
+        print("[6/7] Nap danh sach Ma AR Marker (QR Code & ArUco) cho 4 Nodes...")
+        from infrastructure.models.hierarchy_model import MarkerModel
+        markers_spec = [
+            {"node_id": 1, "type": "QR", "code": "arimms://node/NODE-01", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 1, "type": "QR", "code": "NODE-01", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 1, "type": "ARUCO", "code": "1", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+
+            {"node_id": 2, "type": "QR", "code": "arimms://node/NODE-02", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 2, "type": "QR", "code": "NODE-02", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 2, "type": "ARUCO", "code": "2", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+
+            {"node_id": 3, "type": "QR", "code": "arimms://node/NODE-03", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 3, "type": "QR", "code": "NODE-03", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 3, "type": "ARUCO", "code": "3", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+
+            {"node_id": 4, "type": "QR", "code": "arimms://node/NODE-04", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 4, "type": "QR", "code": "NODE-04", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+            {"node_id": 4, "type": "ARUCO", "code": "4", "coords": json.dumps({"x": 0.0, "y": 0.1, "z": -0.5})},
+        ]
+        for m in markers_spec:
+            existing_m = MarkerModel.query.filter_by(marker_code=m["code"]).first()
+            if not existing_m:
+                new_m = MarkerModel(node_id=m["node_id"], marker_type=m["type"], marker_code=m["code"], spatial_coordinates_json=m["coords"])
+                db.session.add(new_m)
+        db.session.commit()
+
+        print("[7/7] Nap du lieu Telemetry khoi tao & Ticket mau cho Technician...")
+        now = datetime.utcnow()
+        # Seed metrics for all 4 nodes
+        metrics_init = [
+            (1, "cpu_usage_percent", 24.5, "%"), (1, "memory_usage_percent", 45.2, "%"), (1, "temperature_celsius", 52.0, "C"), (1, "disk_usage_percent", 61.0, "%"),
+            (2, "cpu_usage_percent", 94.8, "%"), (2, "memory_usage_percent", 88.6, "%"), (2, "temperature_celsius", 81.5, "C"), (2, "disk_usage_percent", 68.0, "%"),
+            (3, "cpu_usage_percent", 35.0, "%"), (3, "memory_usage_percent", 50.1, "%"), (3, "temperature_celsius", 55.0, "C"), (3, "disk_usage_percent", 58.0, "%"),
+            (4, "cpu_usage_percent", 18.2, "%"), (4, "memory_usage_percent", 39.4, "%"), (4, "temperature_celsius", 49.0, "C"), (4, "disk_usage_percent", 45.0, "%"),
+        ]
+        for nid, mtype, val, unit in metrics_init:
+            db.session.add(TelemetryMetricModel(node_id=nid, metric_type=mtype, value=val, unit=unit, timestamp=now))
+        
+        # Node 2 has critical CPU alert
+        cpu_alert = AlertModel.query.filter_by(node_id=2, status="OPEN").first()
+        if not cpu_alert:
+            cpu_alert = AlertModel(
+                node_id=2,
+                threshold_id=1,
+                alert_type="CPU_OVERLOAD",
+                severity="CRITICAL",
+                status="OPEN",
+                message="Cảnh báo ĐỎ: CPU vượt ngưỡng giới hạn an toàn 94.8% (Ngưỡng Critical: 90%)",
+                metric_value=94.8,
+                triggered_at=now
+            )
+            db.session.add(cpu_alert)
+
+        # Update Node 2 status to CRITICAL
+        node2 = NodeModel.query.get(2)
+        if node2:
+            node2.status = "CRITICAL"
+
+        # Seed Ticket assigned to technician (user_id=3)
+        existing_ticket = TicketModel.query.filter_by(node_id=2, status="IN_PROGRESS").first()
+        if not existing_ticket:
+            demo_ticket = TicketModel(
+                title="Khắc phục sự cố quá tải CPU srv-beta-01",
+                description="Tiến trình stress test chiếm dụng toàn bộ tài nguyên CPU (>94%). Yêu cầu Kỹ thuật viên tới hiện trường sử dụng Mobile AR quét mã máy, thực hiện Step-up Verification tắt tiến trình rác và gửi Yêu cầu Nghiệm thu.",
+                priority="CRITICAL",
+                status="IN_PROGRESS",
+                node_id=2,
+                created_by_user_id=2,
+                assigned_to_user_id=3,
+                created_at=now - timedelta(minutes=15)
+            )
+            db.session.add(demo_ticket)
+            db.session.flush()
+
+            db.session.add(TicketNoteModel(
+                ticket_id=demo_ticket.id,
+                author_user_id=2,
+                note_text="Đã phát hiện cảnh báo CPU > 90% trên Web Command Center. Đã phân công cho Technician Duy Khang tiếp nhận xử lý."
+            ))
+
+        db.session.commit()
         print("\n=== HOÀN TẤT SEED DỮ LIỆU TOÀN DIỆN CHO AR-IMMS ===")
 
 if __name__ == "__main__":

@@ -1,0 +1,54 @@
+services:
+  # CSDL PostgreSQL cho toàn bộ hệ thống AR-IMMS
+  postgres:
+    image: postgres:16-alpine
+    container_name: ar-imms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ar_imms}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-ar_imms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ar-imms-net
+
+  # Backend REST API & WebSocket Gateway Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ar-imms-backend
+    restart: unless-stopped
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-development}
+      DEBUG: ${DEBUG:-True}
+      PORT: ${BACKEND_PORT:-5000}
+      SECRET_KEY: ${SECRET_KEY:-super_secret_jwt_key_change_me_in_production}
+      # Kết nối trực tiếp tới container postgres trong mạng nội bộ docker (ghi đè Supabase URL nếu có trong .env)
+      DATABASE_URI: ${LOCAL_DATABASE_URI:-postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres_password}@postgres:5432/${DB_NAME:-ar_imms}}
+      POSTGRES_DATABASE_URL: ${LOCAL_DATABASE_URI:-postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres_password}@postgres:5432/${DB_NAME:-ar_imms}}
+      AUTO_SEED: ${AUTO_SEED:-true}
+    ports:
+      - "${BACKEND_PORT:-5000}:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ar-imms-net
+
+volumes:
+  postgres_data:
+    name: ar_imms_postgres_data
+
+networks:
+  ar-imms-net:
+    name: ar_imms_network
+    driver: bridge

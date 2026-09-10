@@ -10,6 +10,14 @@ import requests
 import signal
 from dotenv import load_dotenv
 
+# Đảm bảo mã hóa UTF-8 trên Windows console
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from metrics import SystemMetricsCollector
 from buffer import TelemetryBufferQueue
 
@@ -19,7 +27,8 @@ load_dotenv()
 NODE_ID = int(os.environ.get("NODE_ID", 1))
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000")
 API_KEY = os.environ.get("API_KEY", "agent_secret_key_2026")
-COLLECT_INTERVAL = int(os.environ.get("COLLECT_INTERVAL", 5))
+COLLECT_INTERVAL = int(os.environ.get("COLLECT_INTERVAL", 10))
+REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", os.environ.get("TIMEOUT", 15.0)))
 MAX_BUFFER_SIZE = int(os.environ.get("MAX_BUFFER_SIZE", 1000))
 
 # Mã màu ANSI định dạng nhật ký trên Console
@@ -53,12 +62,20 @@ class CollectorAgentDaemon:
             "X-Node-ID": str(NODE_ID)
         }
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=3.0)
+            response = requests.post(url, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
             if response.status_code in (200, 201):
                 return True
             else:
+                print(f"{COLOR_RED}[Lỗi Phản Hồi Backend] HTTP {response.status_code}: {response.text[:200]}{COLOR_RESET}")
                 return False
-        except Exception:
+        except requests.exceptions.Timeout:
+            print(f"{COLOR_RED}[Lỗi Timeout] Hết thời gian chờ phản hồi từ Backend (vượt quá {REQUEST_TIMEOUT}s khi gọi {url}){COLOR_RESET}")
+            return False
+        except requests.exceptions.ConnectionError as e:
+            print(f"{COLOR_RED}[Lỗi Kết Nối] Không thể kết nối tới Backend tại {url}: {e}{COLOR_RESET}")
+            return False
+        except Exception as e:
+            print(f"{COLOR_RED}[Lỗi Không Xác Định] {type(e).__name__}: {e}{COLOR_RESET}")
             return False
 
     def flush_buffered_telemetry(self):
@@ -93,6 +110,7 @@ class CollectorAgentDaemon:
         print(f"Hệ điều hành OS:       {self.collector.os_name} {self.collector.os_version}")
         print(f"Máy chủ Backend:       {BACKEND_URL}")
         print(f"Chu kỳ thu thập:       {COLLECT_INTERVAL} giây")
+        print(f"Thời gian chờ Timeout: {REQUEST_TIMEOUT} giây")
         print(f"{COLOR_CYAN}----------------------------------------------------{COLOR_RESET}")
 
         while self.is_running:
@@ -130,7 +148,7 @@ class CollectorAgentDaemon:
                 self.buffer.enqueue(snapshot)
                 status_label = f"{COLOR_YELLOW}[OFFLINE - LƯU ĐỆM (Hàng đợi: {self.buffer.size()}/{MAX_BUFFER_SIZE})]{COLOR_RESET}"
 
-            print(f"{status_label} {time.strftime('%H:%M:%S')} | {cpu_str} | {ram_str} | {disk_str} | {temp_str} | {net_str}")
+            print(f"{status_label} {time.strftime('%H:%M:%S')} | {cpu_str} | {ram_str} | {disk_str} | {temp_str} | {net_str}", flush=True)
 
             # Đợi cho tới chu kỳ thu thập tiếp theo
             elapsed = time.time() - start_loop_time

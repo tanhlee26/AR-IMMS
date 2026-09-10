@@ -26,8 +26,8 @@ const nav = [
   ["Tổng quan",   LayoutDashboard],
   ["Digital Twin",Box],
   ["Telemetry",   Activity],
-  ["Cảnh báo",    Bell, 3],
-  ["Tickets",     Ticket, 4],
+  ["Cảnh báo",    Bell],
+  ["Tickets",     Ticket],
   ["Báo cáo PUE", BarChart3],
 ];
 
@@ -135,21 +135,26 @@ function AlertTable({ alerts, acknowledge, createFromAlert, full = false }) {
       <table>
         <thead><tr><th>MỨC ĐỘ</th><th>NGUỒN</th><th>NỘI DUNG</th><th>THỜI GIAN</th><th>TRẠNG THÁI</th><th /></tr></thead>
         <tbody>
-          {alerts.map((a) => (
-            <tr key={a.id}>
-              <td><span className={`severity ${a.severity.toLowerCase()}`}><i />{a.severity}</span></td>
-              <td><b>{a.source}</b><small>{a.code || a.id}</small></td>
-              <td>{a.message}</td>
-              <td><Clock3 />{a.time || "Vừa cập nhật"}</td>
-              <td><span className="state">{a.state}</span></td>
-              <td>
-                <div className="row-actions">
-                  {a.state === "Chưa xử lý" && <button className="ack" onClick={() => acknowledge(a.id)}>Xác nhận</button>}
-                  {full && <button className="ack" onClick={() => createFromAlert(a)}>Tạo ticket</button>}
-                </div>
-              </td>
-            </tr>
-          ))}
+          {alerts.map((a) => {
+            const severityStr = a.severity || "Warning";
+            const severityLower = severityStr.toLowerCase();
+            const isUnhandled = a.state === "Chưa xử lý" || a.status === "OPEN";
+            return (
+              <tr key={a.id}>
+                <td><span className={`severity ${severityLower}`}><i />{severityStr}</span></td>
+                <td><b>{a.source || "Hệ thống"}</b><small>{a.code || `ALT-${a.id}`}</small></td>
+                <td>{a.message}</td>
+                <td><Clock3 />{a.time || "Vừa cập nhật"}</td>
+                <td><span className="state">{a.state || (isUnhandled ? "Chưa xử lý" : "Đã xác nhận")}</span></td>
+                <td>
+                  <div className="row-actions">
+                    {isUnhandled && <button className="ack" onClick={() => acknowledge(a.id)}>Xác nhận</button>}
+                    {full && <button className="ack" onClick={() => createFromAlert(a)}>Tạo ticket</button>}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -161,6 +166,7 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
   const [closureSummary, setClosureSummary] = useState("");
   const [resolutionDetails, setResolutionDetails] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [alertFilter, setAlertFilter] = useState("all");
   if (active === "Digital Twin") return (
     <section className="detail-layout">
       <div className="card detail-tree"><div className="card-title"><div><h2>Cây hạ tầng</h2><span>Site → Room → Rack → Node</span></div></div><Tree selected={selected} setSelected={setSelected} nodes={nodes} hierarchyTree={hierarchyTree} /></div>
@@ -205,15 +211,27 @@ function WorkspaceView({ active, nodes, selected, setSelected, alerts, tickets, 
     </section>
   );
 
-  if (active === "Cảnh báo") return (
-    <section className="card full-panel">
-      <div className="card-title">
-        <div><h2>Quản lý cảnh báo</h2><span>{alerts.filter((a) => a.state === "Chưa xử lý").length} cảnh báo cần xác nhận</span></div>
-        <div className="filter-pills"><button className="selected">Tất cả</button><button>Critical</button><button>Warning</button></div>
-      </div>
-      <AlertTable alerts={alerts} acknowledge={acknowledge} createFromAlert={createFromAlert} full />
-    </section>
-  );
+  if (active === "Cảnh báo") {
+    const unhandledCount = alerts.filter((a) => a.state === "Chưa xử lý" || a.status === "OPEN").length;
+    const filteredAlerts = alerts.filter((a) => {
+      if (alertFilter === "Critical") return (a.severity || "").toLowerCase() === "critical";
+      if (alertFilter === "Warning") return (a.severity || "").toLowerCase() === "warning";
+      return true;
+    });
+    return (
+      <section className="card full-panel">
+        <div className="card-title">
+          <div><h2>Quản lý cảnh báo</h2><span>{unhandledCount} cảnh báo cần xác nhận</span></div>
+          <div className="filter-pills">
+            <button className={alertFilter === "all" ? "selected" : ""} onClick={() => setAlertFilter("all")}>Tất cả ({alerts.length})</button>
+            <button className={alertFilter === "Critical" ? "selected" : ""} onClick={() => setAlertFilter("Critical")}>Critical ({alerts.filter((a) => (a.severity || "").toLowerCase() === "critical").length})</button>
+            <button className={alertFilter === "Warning" ? "selected" : ""} onClick={() => setAlertFilter("Warning")}>Warning ({alerts.filter((a) => (a.severity || "").toLowerCase() === "warning").length})</button>
+          </div>
+        </div>
+        <AlertTable alerts={filteredAlerts} acknowledge={acknowledge} createFromAlert={createFromAlert} full />
+      </section>
+    );
+  }
 
   if (active === "Tickets") return (
     <section className="tickets-board">
@@ -436,15 +454,53 @@ export default function App() {
     [selected.id, selected.cpu, tick]
   );
 
+  const unhandledAlertsCount = useMemo(() => {
+    return alerts.filter((a) => a.state === "Chưa xử lý" || a.status === "OPEN").length;
+  }, [alerts]);
+
+  const activeTicketsCount = useMemo(() => {
+    return tickets.filter((t) => t.status !== "CLOSED").length;
+  }, [tickets]);
+
+  const navItems = useMemo(() => [
+    ["Tổng quan",   LayoutDashboard, 0],
+    ["Digital Twin",Box,             0],
+    ["Telemetry",   Activity,        0],
+    ["Cảnh báo",    Bell,            unhandledAlertsCount],
+    ["Tickets",     Ticket,          activeTicketsCount],
+    ["Báo cáo PUE", BarChart3,       0],
+  ], [unhandledAlertsCount, activeTicketsCount]);
+
   const acknowledge = async (id) => {
-    try { const updated = await api.acknowledge(id); setAlerts((a) => a.map((x) => x.id === id ? updated : x)); setToast(`Đã xác nhận ${updated.code}`); }
-    catch { setToast("Không thể xác nhận cảnh báo"); }
+    try {
+      const updated = await api.acknowledge(id);
+      setAlerts((a) =>
+        a.map((x) =>
+          x.id === id
+            ? { ...x, ...updated, state: "Đã xác nhận", status: "ACKNOWLEDGED" }
+            : x
+        )
+      );
+      setToast(`Đã xác nhận ${updated.code || `ALT-${id}`}`);
+    } catch {
+      setToast("Không thể xác nhận cảnh báo");
+    }
   };
   const createFromAlert = async (alert) => {
     try {
-      const item = await api.createTicket({ node_id: alert.nodeId || 1, alert_id: alert.id, title: `Xử lý: ${alert.message}`, description: `Cảnh báo từ ${alert.source}`, priority: alert.severity === "Critical" ? "URGENT" : "MEDIUM", assigned_to_user_id: 2 });
-      setTickets((t) => [item, ...t]); setToast(`Đã tạo ${item.code}`);
-    } catch { setToast("Không thể tạo ticket"); }
+      const item = await api.createTicket({
+        node_id: alert.nodeId || alert.node_id || 1,
+        alert_id: alert.id,
+        title: `Xử lý: ${alert.message || "Sự cố thiết bị"}`,
+        description: `Cảnh báo từ ${alert.source || "Hệ thống"}`,
+        priority: (alert.severity || "").toLowerCase() === "critical" ? "URGENT" : "MEDIUM",
+        assigned_to_user_id: 2,
+      });
+      setTickets((t) => [item, ...t]);
+      setToast(`Đã tạo ${item.code || `TCK-${item.id}`}`);
+    } catch {
+      setToast("Không thể tạo ticket");
+    }
   };
   const updateTicket = async (id, changes) => {
     try { const item = await api.updateTicket(id, changes); setTickets((t) => t.map((x) => x.id === id ? item : x)); setToast(`Đã cập nhật ${item.code}`); }
@@ -496,9 +552,9 @@ export default function App() {
           <div><div className="avatar square">DC</div><p><b>HCM Data Center</b><small>Production</small></p><ChevronDown /></div>
         </div>
         <nav>
-          {nav.map(([label, Icon, badge]) => (
+          {navItems.map(([label, Icon, badge]) => (
             <button key={label} onClick={() => { setActive(label); setMenuOpen(false); }} className={active === label ? "active" : ""}>
-              <Icon /><span>{label}</span>{badge && <em>{badge}</em>}
+              <Icon /><span>{label}</span>{Boolean(badge && badge > 0) && <em>{badge}</em>}
             </button>
           ))}
         </nav>
@@ -517,7 +573,10 @@ export default function App() {
           <div className="search"><Search /><input aria-label="Tìm kiếm" placeholder="Tìm server, ticket, cảnh báo..." /><kbd>⌘ K</kbd></div>
           <div className="header-actions">
             <div className={`live ${connected ? "" : "disconnected"}`}><i />{connected ? "Backend trực tuyến" : "Dữ liệu dự phòng"}</div>
-            <button className="icon-button"><Bell /><b>{summary.openAlerts || 0}</b></button>
+            <button className="icon-button" onClick={() => setActive("Cảnh báo")} title="Cảnh báo">
+              <Bell />
+              {unhandledAlertsCount > 0 && <b>{unhandledAlertsCount}</b>}
+            </button>
             {/* ── Bước 4: Hiện user thật từ /auth/me ── */}
             <div className="user">
               <div className="avatar">{avatarText}</div>
@@ -593,7 +652,7 @@ export default function App() {
               <section className="bottom-grid">
                 <div className="card alerts">
                   <div className="card-title">
-                    <div><h2>Cảnh báo gần đây</h2><span>{alerts.filter((a) => a.state === "Chưa xử lý").length} cảnh báo cần xử lý</span></div>
+                    <div><h2>Cảnh báo gần đây</h2><span>{unhandledAlertsCount} cảnh báo cần xử lý</span></div>
                     <button className="text-button" onClick={() => setActive("Cảnh báo")}>Xem tất cả <ChevronRight /></button>
                   </div>
                   <AlertTable alerts={alerts} acknowledge={acknowledge} createFromAlert={createFromAlert} />
